@@ -1,0 +1,9 @@
+/*
+* Description: Create a static file server (http based).
+*              This will list all the files and directories via Node.Js.
+*              The behavior will be like directory browsing enabled in IIS,
+* Author: Kris Zhang
+* Blog: http://c52u.com
+* Required: Node.js:    http://www.nodejs.org.
+* Date: 2012-3 Draft
+*/
