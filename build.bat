@@ -1,6 +1,6 @@
 REM Combine first
-node tool/Combine.js -i makefile.list -o ViewSvr.all.js
+node tool/Combine.js -i makefile.list -o WebSvr.all.js
 REM Then excute it
-node ViewSvr.all.js
+node WebSvr.all.js
 REM Complete Gooldbye.
 pause;
