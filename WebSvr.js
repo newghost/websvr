@@ -1,9 +1,10 @@
+/*WebSvr.js*/
 /*
 * Description: Create a static file server (http based).
 *              This will list all the files and directories via Node.Js.
 *              The behavior will be like directory browsing enabled in IIS,
 * Author: Kris Zhang
-* Blog: http://c52u.so
+* Blog: http://c52u.com
 * Required: Node.js: http://www.nodejs.org,
 *           mime.js: https://github.com/bentomas/node-mime
 * Date: 2012-3 Draft
@@ -11,9 +12,9 @@
 *       2012-7 Update: Rename and reformat files
 */
 /*
-* ViewSvr Namespace
+* WebSvr Namespace
 */
-var ViewSvr = (function(){
+var WebSvr = (function(){
 
   /*
   var defaults = {
@@ -72,14 +73,14 @@ var ViewSvr = (function(){
 
       count = 0;
 
-      var url = request.url;
+      var url = request.url,
+          hasQuery = url.indexOf("?");
 
-      //bug can't recognized the parameter;
-      url = url.replace(/\?[\w_=-]+$/g, '');
+      //bug: path.join can't recognize the querystring;
+      url = hasQuery > 0 ? url.substring(0, hasQuery) : url;
 
       var fullPath = path.join(dir, url),
           stat;
-
 
       try{
         stat = fs.statSync(fullPath)
@@ -89,7 +90,7 @@ var ViewSvr = (function(){
         return;
       }
       
-      //List all the files in a directory including the all the sub/child folders.
+      //List all the files in a directory.
       var listFiles = function(callback){
 
         fs.readdir(fullPath, function(err, files){
@@ -99,27 +100,26 @@ var ViewSvr = (function(){
           }
 
           for(var idx = 0, len = files.length; idx < len; idx++){
-            //persitent the idx before make the sync process
+            //persistent the idx before make the sync process
             (function(idx){
-              var  filePath = path.join(fullPath, files[idx]),
-                fileUrl = urlFormat(path.join(url, files[idx]));
+              var filePath = path.join(fullPath, files[idx]),
+                  fileUrl = urlFormat(path.join(url, files[idx]));
 
               fs.stat(filePath, function(err, stat){
-                if(err){
-                  console.log(err);
-                  return;
-                }
-
                 count++;
 
-                response.write(
-                  date(stat.mtime)
-                  + "\t" + size(stat.size)
-                  + anchor(files[idx], fileUrl)
-                  + "\r\n"
-                );
+                if(err){
+                  console.log(err);
+                }else{
+                  response.write(
+                    date(stat.mtime)
+                    + "\t" + size(stat.size)
+                    + anchor(files[idx], fileUrl)
+                    + "\r\n"
+                  );
+                }
 
-                idx == len -1 && callback();
+                count == len && callback();
               });
             })(idx);
           }
@@ -128,14 +128,7 @@ var ViewSvr = (function(){
 
       //Is file? Open this file and send to client.
       if(stat.isFile()){
-        fs.readFile(fullPath, function(err, data){
-          if(err){
-            console.log(err);
-            return;
-          }
-          response.writeHead(200, {"Content-Type": mime.lookup(fullPath) });
-          response.end(data, "binary");
-        });
+        self.writeFile(response, fullPath);
       }
       //Is Directory? List all the files and folders.
       else if(stat.isDirectory()){
@@ -150,8 +143,41 @@ var ViewSvr = (function(){
       }
     };
 
+    self.writeFile = function(response, fullPath){
+      fs.readFile(fullPath, function(err, data){
+        if(err){
+          console.log(err);
+          return;
+        }
+        response.writeHead(200, { "Content-Type": mime.lookup(fullPath) });
+        response.end(data, "binary");
+      });
+    };
+
     /*
-    public start http server;
+    try write file, we don't know the path is relative or absolute.
+    */
+    self.tryWriteFile = function(response, filePath){
+      var stat;
+      try{
+        stat = fs.statSync(filePath)
+      }
+      catch(err){
+        try{
+          filePath = path.join(dir, filePath);
+          stat = fs.statSync(filePath);
+        }
+        catch(e){
+          response.writeHead(404, {"Content-Type": "text/html"});
+          response.end("File not found!");
+        }
+      }
+
+      self.writeFile(response, filePath);
+    };
+
+    /*
+    public: start http server
     */
     self.start = function(){
       // Entry Point
@@ -182,7 +208,7 @@ var ViewSvr = (function(){
     };
 
     /*
-    public close http server;
+    public: close http server;
     */
     self.close = function(){
       if(self.httpSvr){

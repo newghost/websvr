@@ -1,6 +1,7 @@
 #config file
 #These modules will be crunched to one.
 
+RequestParser.js
 UrlMapper.js
-ViewSvr.js
+WebSvr.js
 Main.js
