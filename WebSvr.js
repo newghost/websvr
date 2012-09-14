@@ -1,4 +1,3 @@
-/*WebSvr.js*/
 /*
 * Description: Create a static file server (http based).
 *              This will list all the files and directories via Node.Js.
@@ -16,29 +15,31 @@
 */
 var WebSvr = (function(){
 
-  /*
-  var defaults = {
-    //root directory of the web
-    dir: "C:\\Program Files",
-    //listening port.
-    port: 8021,
-    //url mapping parameters.
-    urlMapper: null
-  };
-  */
-
-  var server = function(strDir, strPort, urlMapper){
-    var  fs = require("fs"),
+  var server = function(strDir, strPort){
+    /*
+    Library
+    */
+    var fs = require("fs"),
       path = require("path"),
-      mime = require("./lib/mime"),
-      //it self
-      self = this,
+      mime = require("./lib/mime");
+
+    /*
+    Parameters
+    */
+    var self = this,
       //Root path
       dir = "C:\\Program Files",
       //Listening port
       port = 8021,
       //How many files?
       count = 0;
+
+    /*
+    Modules
+    */
+    var urlMapper = new UrlMapper(self);
+
+
 
     var urlFormat = function(url){
       url = url.replace(/\\/g,'/');
@@ -66,8 +67,8 @@ var WebSvr = (function(){
     };
 
     var requestHandler = function(request, response){
-      //url redirect module
-      if(urlMapper && urlMapper.match(request, response)){
+      //If request matched, send the request;
+      if(urlMapper.match(request, response)){
         return;
       }
 
@@ -142,6 +143,10 @@ var WebSvr = (function(){
         });
       }
     };
+
+    /* Expose the urlMapper handle method*/
+    self.url = urlMapper.url;
+    self.post = urlMapper.post;
 
     self.writeFile = function(response, fullPath){
       fs.readFile(fullPath, function(err, data){

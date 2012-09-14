@@ -1,4 +1,4 @@
-/* RequestParser.js
+/*
 Request parser,
 when parse complete, execute the callback, with response data;
 */

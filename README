@@ -1,36 +1,33 @@
-Create a static file server (http based).
-This will list all the files and directories via Node.Js.
-The behavior will be like directory browsing enabled in IIS.
+Create a web server.
 
 /*
-Main : start the server
-treate the current folder as the default folder
+Main.js
+Listenening on parent folder
 */
-var urlMapper = new UrlMapper();
-var webSvr = new WebSvr("./", 8000, urlMapper);
+var webSvr = new WebSvr("./../", 8054);
 webSvr.start();
 
 /*
 UrlMapper example: close server
-try it at: http://localhost:8000/admin/close
+http://localhost:8054/admin/close
 */
-urlMapper.add(/admin\/close/g, function(req, res){
+webSvr.url(/admin\/close/g, function(req, res){
   res.writeHead(200, {"Content-Type": "text/plain"});
   res.end("server is closed");
-  webSvr.close();
+  webSVr.close();
 });
 
 /*
 Map build.txt to tool/Combine.js
-try it at: http://localhost:8000/build.txt
+try it at: http://localhost:8054/build.txt
 */
-urlMapper.add(/build.txt/, ["tool/Combine.js"]);
+webSvr.url(/build.txt/, ["node-websvr/tool/Combine.js"]);
 
 /*
-Map post.htm, and write the post data on the data;
-try it at: http://localhost:8000/post.htm
+Map post.htm, and parse the post data on the request;
+try it at: http://localhost:8054/post.htm
 */
-urlMapper.parse(/post.htm/, function(req, res, data){
+webSvr.post(/post.htm/, function(req, res, data){
   res.write('<form action="" method="post">')
   res.write('<input name="input" />')
   res.write('</form><br/>');

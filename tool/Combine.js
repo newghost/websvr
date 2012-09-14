@@ -4,14 +4,21 @@
 * Blog: http://c52u.com
 */
 
+//Combine namespace
+var Combine;
+
 (function(){
 
   var fs = require("fs"),
-      path = require("path");
+      path = require("path"),
+      timerID = null;
 
-  var combine = module.exports = {
-    //Combined to which file?
+  var combine = Combine = module.exports = {
+    sourceFile: "",
     targetFile: "",
+    files: [],          //combine list
+    list: [],           //watch list
+    watch: false,       //listen on the changes?
 
     //Interface
     init: function(sourceFile, targetFile, watch){
@@ -22,20 +29,15 @@
           return;
         }
 
+        combine.sourceFile = sourceFile;
         combine.targetFile = targetFile;
+        combine.watch = watch;
 
+        //It's a configuration files or dictionary
         if(stat.isFile()){
-          //get file list from the configuration files.
-          var files = combine.getFiles(sourceFile);
-
-          if(combine.combine(files)){
-            watch && combine.watchFiles(files);
-          }
+          combine.setCfg(sourceFile);
         }else{
-          //Combine at the first running, then watching the changes.
-          if(combine.combineDir(sourceFile)){
-            watch && combine.watchDir(sourceFile);
-          }
+          combine.setDir(sourceFile);
         }
       });
     },
@@ -67,23 +69,53 @@
         }
       });
 
+      combine.watch && files.forEach(function(file){
+        if(combine.list.indexOf(file) < 0){
+          combine.watchFile(file);
+          combine.list.push(file);
+        };
+      });
+
+      combine.files = files;
+
       return files;
     },
 
-    //Watch changes on list of files
-    watchFiles: function(files){
-      files.forEach(function(file){
-        fs.watch(file, function(evt, filename){
-          combine.combine(files);
+    //Watch changes on source folder
+    setDir: function(directory){
+      //Combine at the first running, then watching the changes.
+      if(combine.combineDir(directory)){
+        combine.watch && fs.watch(directory, function(){
+          combine.combineDir(directory);
         });
-      });
+      }
     },
 
-    //Watch changes on source folder
-    watchDir: function(directory){
-      fs.watch(directory, function(evt, filename){
-        combine.combineDir(directory);
-      });
+    //Watch chagnes on configuration fiel
+    setCfg: function(configuration){
+      var combineCfg = function(){
+        //get file list from the configuration files.
+        combine.getFiles(configuration);
+        combine.combine();
+      };
+
+      //Listen on the change on the configuration file
+      combine.watch && fs.watch(configuration, combineCfg);
+
+      //combine at the first running
+      combineCfg();
+    },
+
+    //Watch changes on a file
+    watchFile: function(file){
+      try{
+        fs.watch(file, function(){
+          combine.combine();
+        });
+      }
+      catch(err){
+        console.log(file, err);
+      }
     },
 
     //Combine directory
@@ -102,7 +134,9 @@
           }
         });
 
-        return combine.combine(files);
+        combine.files = files;
+
+        return combine.combine();
       }
       catch(err){
         console.log(err);
@@ -111,11 +145,21 @@
     },
 
     //Combine set of files into one
-    combine: function(files){
+    combine: function(){
+
+      //Prevent other request within 1 seconds;
+      if(timerID) return;
+
+      timerID = setTimeout(function(){
+        timerID = null;
+      }, 1000);
+
       var oStream = combine.getStream(), r = true;
       if(!oStream){
         return false;
       }
+
+      var files = combine.files;
 
       try{
         files.forEach(function(file){
@@ -135,9 +179,10 @@
         oStream.end();
         
         var endTime = new Date();
-        console.log("count:", files.length,
-            ", date:", new Date().toTimeString(),
-            "\r\n\r\n"
+        console.log("count:",
+          files.length,
+          ", date:", new Date().toTimeString(),
+          "\r\n\r\n"
         );
       }
       catch(err){
@@ -148,6 +193,17 @@
       return r;
     }
   };
+
+})();
+
+
+/*
+* call it from command lines
+* -i filepath: input directory or cfg file
+* -o filepath: output files
+* -w: keep watch the changes?
+*/
+(function(){
 
   /*
    * parsing parameters from command line
@@ -165,19 +221,10 @@
     }
   };
 
-  /*
-  * call it
-  * -i filepath: input directory or cfg file
-  * -o filepath: output files
-  * -w: keep watch the changes?
-  */
-  (function(){
-    var args = process.argv.join(' '),
-        input = parsing(args, '-i'),
-        output = parsing(args, '-o');
+  var args = process.argv.join(' '),
+      input = parsing(args, '-i'),
+      output = parsing(args, '-o');
 
-    combine.init(input, output, args.indexOf(' -w') > 0);
-
-  })();
+  Combine.init(input, output, args.indexOf(' -w') > 0);
 
 })();

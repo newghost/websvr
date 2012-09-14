@@ -1,5 +1,5 @@
 /*RequestParser.js*/
-/* RequestParser.js
+/*
 Request parser,
 when parse complete, execute the callback, with response data;
 */
@@ -20,22 +20,25 @@ var RequestParser = function(req, res, callback){
   });
 };
 /*UrlMapper.js*/
-/* UrlMap.js
+/*
 Url mapper
 */
-var UrlMapper = function(){
+var UrlMapper = function(webSvr){
   var self = this,
       maps = [];
 
   /*
-  Add a maching rule
+  Handle matched rule;
   */
-  self.add = function(regExp, handler){
-    maps.push({regExp: regExp, handler: handler});
+  self.url = function(regExp, handler, parse){
+    maps.push({regExp: regExp, handler: handler, parse: parse});
   };
 
-  self.parse = function(regExp, handler){
-    maps.push({regExp: regExp, handler: handler, parse: true});
+  /*
+  Parse the post request data
+  */
+  self.post = function(regExp, handler){
+    self.url(regExp, handler, true);
   };
 
   /*
@@ -48,11 +51,12 @@ var UrlMapper = function(){
       if(mapper.regExp && mapper.regExp.test(req.url)){
 
         try{
-          var handler = mapper.handler;
+          var handler = mapper.handler,
+              type = handler.constructor.name;
 
-          switch(typeof handler){
+          switch(type){
             //function: treated it as custom function handler
-            case "function":
+            case "Function":
               //need to parse the request?
               if(mapper.parse){
                 RequestParser(req, res, handler);
@@ -62,17 +66,16 @@ var UrlMapper = function(){
               return true;
 
             //string: treated it as content
-            case "string":
+            case "String":
               res.writeHead(200, { "Content-Type": "text/html" });
               res.end(handler);
               return true;
 
-            //array: array is an object, treated it as file.
-            case "object":
+            //array: treated it as a file.
+            case "Array":
               webSvr.tryWriteFile(res, handler[0]);
               return true;
           }
-          console.log(typeof handler, handler);
         }
         catch(err){ console.log(err) }
       }
@@ -83,7 +86,6 @@ var UrlMapper = function(){
   return self;
 
 };
-/*WebSvr.js*/
 /*WebSvr.js*/
 /*
 * Description: Create a static file server (http based).
@@ -102,29 +104,31 @@ var UrlMapper = function(){
 */
 var WebSvr = (function(){
 
-  /*
-  var defaults = {
-    //root directory of the web
-    dir: "C:\\Program Files",
-    //listening port.
-    port: 8021,
-    //url mapping parameters.
-    urlMapper: null
-  };
-  */
-
-  var server = function(strDir, strPort, urlMapper){
-    var  fs = require("fs"),
+  var server = function(strDir, strPort){
+    /*
+    Library
+    */
+    var fs = require("fs"),
       path = require("path"),
-      mime = require("./lib/mime"),
-      //it self
-      self = this,
+      mime = require("./lib/mime");
+
+    /*
+    Parameters
+    */
+    var self = this,
       //Root path
       dir = "C:\\Program Files",
       //Listening port
       port = 8021,
       //How many files?
       count = 0;
+
+    /*
+    Modules
+    */
+    var urlMapper = new UrlMapper(self);
+
+
 
     var urlFormat = function(url){
       url = url.replace(/\\/g,'/');
@@ -152,8 +156,8 @@ var WebSvr = (function(){
     };
 
     var requestHandler = function(request, response){
-      //url redirect module
-      if(urlMapper && urlMapper.match(request, response)){
+      //If request matched, send the request;
+      if(urlMapper.match(request, response)){
         return;
       }
 
@@ -228,6 +232,10 @@ var WebSvr = (function(){
         });
       }
     };
+
+    /* Expose the urlMapper handle method*/
+    self.url = urlMapper.url;
+    self.post = urlMapper.post;
 
     self.writeFile = function(response, fullPath){
       fs.readFile(fullPath, function(err, data){
@@ -310,37 +318,38 @@ var WebSvr = (function(){
 
 })();
 /*Main.js*/
+
 /*
-Main : start the server
-treate the current folder as the default folder
+Main.js
+Listenening on parent folder
 */
-var urlMapper = new UrlMapper();
-var webSvr = new WebSvr("./", 8000, urlMapper);
+var webSvr = new WebSvr("./../", 8054);
 webSvr.start();
 
 /*
 UrlMapper example: close server
-try it at: http://localhost:8000/admin/close
+http://localhost:8054/admin/close
 */
-urlMapper.add(/admin\/close/g, function(req, res){
+webSvr.url(/admin\/close/g, function(req, res){
   res.writeHead(200, {"Content-Type": "text/plain"});
   res.end("server is closed");
-  webSvr.close();
+  webSVr.close();
 });
 
 /*
 Map build.txt to tool/Combine.js
-try it at: http://localhost:8000/build.txt
+try it at: http://localhost:8054/build.txt
 */
-urlMapper.add(/build.txt/, ["tool/Combine.js"]);
+webSvr.url(/build.txt/, ["node-websvr/tool/Combine.js"]);
 
 /*
-Map post.htm, and write the post data on the data;
-try it at: http://localhost:8000/post.htm
+Map post.htm, and parse the post data on the request;
+try it at: http://localhost:8054/post.htm
 */
-urlMapper.parse(/post.htm/, function(req, res, data){
+webSvr.post(/post.htm/, function(req, res, data){
   res.write('<form action="" method="post">')
   res.write('<input name="input" />')
   res.write('</form><br/>');
   res.end(data);
 });
+

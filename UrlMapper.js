@@ -1,19 +1,22 @@
-/* UrlMap.js
+/*
 Url mapper
 */
-var UrlMapper = function(){
+var UrlMapper = function(webSvr){
   var self = this,
       maps = [];
 
   /*
-  Add a maching rule
+  Handle matched rule;
   */
-  self.add = function(regExp, handler){
-    maps.push({regExp: regExp, handler: handler});
+  self.url = function(regExp, handler, parse){
+    maps.push({regExp: regExp, handler: handler, parse: parse});
   };
 
-  self.parse = function(regExp, handler){
-    maps.push({regExp: regExp, handler: handler, parse: true});
+  /*
+  Parse the post request data
+  */
+  self.post = function(regExp, handler){
+    self.url(regExp, handler, true);
   };
 
   /*
@@ -26,11 +29,12 @@ var UrlMapper = function(){
       if(mapper.regExp && mapper.regExp.test(req.url)){
 
         try{
-          var handler = mapper.handler;
+          var handler = mapper.handler,
+              type = handler.constructor.name;
 
-          switch(typeof handler){
+          switch(type){
             //function: treated it as custom function handler
-            case "function":
+            case "Function":
               //need to parse the request?
               if(mapper.parse){
                 RequestParser(req, res, handler);
@@ -40,17 +44,16 @@ var UrlMapper = function(){
               return true;
 
             //string: treated it as content
-            case "string":
+            case "String":
               res.writeHead(200, { "Content-Type": "text/html" });
               res.end(handler);
               return true;
 
-            //array: array is an object, treated it as file.
-            case "object":
+            //array: treated it as a file.
+            case "Array":
               webSvr.tryWriteFile(res, handler[0]);
               return true;
           }
-          console.log(typeof handler, handler);
         }
         catch(err){ console.log(err) }
       }
