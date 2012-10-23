@@ -1,0 +1,18 @@
+#config file
+#These modules will be crunched to one.
+#TODO: Need to support dictionary in the list;
+
+#reference
+ref/Math.uuid.js
+ref/Object.extend.js
+
+#WebSvr
+RequestParser.js
+SessionParser.js
+Parser.js
+Filter.js
+Handler.js
+WebSvr.js
+
+#Testing Site
+SiteTest.js
