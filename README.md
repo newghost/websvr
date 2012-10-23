@@ -1,6 +1,6 @@
-WebSvr: Version 0.012
+WebSvr
 ==============
-Lincense: MIT
+Lincense: MIT, GNU
 
 version: 0.020
 --------------
@@ -16,7 +16,7 @@ version: 0.005
 Sample:
 --------------
 
-    //Start WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
+    //Start WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
     //Trying at: http://localhost:8054
     var webSvr = new WebSvr({root:"./../"});
     webSvr.start();
