@@ -7,7 +7,7 @@ Description:
 Create a Web Server (http based), all the files will be combined into one, in order to use the various kinds of javascript libraries in Node.js; 
 
 
-version: 0.022
+Version: 0.021
 --------------
 - Filter: A request will mapping all the filters first, and then pass to the Handler;
 - Handler: When a request matched a handler, it will returned, so only one handler will be matched;
@@ -17,7 +17,7 @@ version: 0.022
 - Underscore: Add underscore a utility-belt library for JavaScript
   https://github.com/documentcloud/underscore
 
-version: 0.005
+Version: 0.005
 --------------
 - MIME: Suppor mime header, integrate https://github.com/broofa/node-mime
 
