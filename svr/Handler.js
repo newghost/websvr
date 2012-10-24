@@ -7,11 +7,6 @@ var Handler;
 (function(){
 
   /*
-  Private: web server instance
-  */
-  var webSvr;
-
-  /*
   Private: handler list
   */
   var handlers = [];
@@ -23,13 +18,13 @@ var Handler;
 
     url : function(regExp, handler, options){
       var params = {regExp: regExp, handler: handler};
-      handlers.push(Object.extend(params, options));
+      handlers.push(_.extend(params, options));
     },
 
     //Post: Parse the post data by default;
     post : function(regExp, handler, options){
       var params = { parse: true };
-      this.url(regExp, handler, Object.extend(params, options));
+      this.url(regExp, handler, _.extend(params, options));
     },
 
     //Session: Parse the session and post by default;

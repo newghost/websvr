@@ -1,3 +1,12 @@
+/*Global.js*/
+/*
+* Description: WebSvr
+* Lincense: MIT, GPL
+* Author: Kris Zhang
+*/
+
+//Underscore global object;
+var _ = require("./lib/underscore");
 /*ref\Math.uuid.js*/
 /*!
 Math.uuid.js (v1.4)
@@ -92,17 +101,6 @@ Dual licensed under the MIT and GPL licenses.
   };
 })();
 
-/*ref\Object.extend.js*/
-Object.extend = function(des, src){
-
-  if(!des) des = {};
-
-  for(var p in src){
-    if(!des[p]) des[p] = src[p];
-  }
-
-  return des;
-}
 /*RequestParser.js*/
 /*
 Request parser, parse the data in request body via 
@@ -305,7 +303,7 @@ var Filter = {
   */
   add : function(regExp, handler, options){
     var params = {regExp: regExp, handler: handler};
-    Filter.filters.push(Object.extend(params, options));
+    Filter.filters.push(_.extend(params, options));
   },
 
   /*
@@ -315,7 +313,7 @@ var Filter = {
   file: function(regExp, handler, options){
     var params = {regExp: regExp, handler: handler, file: true};
     //insert as the first elements
-    Filter.filters.splice(0, 0, Object.extend(params, options));
+    Filter.filters.splice(0, 0, _.extend(params, options));
   }
 };
 
@@ -364,11 +362,6 @@ var Handler;
 (function(){
 
   /*
-  Private: web server instance
-  */
-  var webSvr;
-
-  /*
   Private: handler list
   */
   var handlers = [];
@@ -380,13 +373,13 @@ var Handler;
 
     url : function(regExp, handler, options){
       var params = {regExp: regExp, handler: handler};
-      handlers.push(Object.extend(params, options));
+      handlers.push(_.extend(params, options));
     },
 
     //Post: Parse the post data by default;
     post : function(regExp, handler, options){
       var params = { parse: true };
-      this.url(regExp, handler, Object.extend(params, options));
+      this.url(regExp, handler, _.extend(params, options));
     },
 
     //Session: Parse the session and post by default;
@@ -444,16 +437,8 @@ var Handler;
 
 /*WebSvr.js*/
 /*
-* Description: Create a static file server (http based).
-*              This will list all the files and directories via Node.Js.
-*              The behavior will be like directory browsing enabled in IIS,
+* Description: Create a Web Server (http based).
 * Author: Kris Zhang
-* Dependence: Node.js: http://www.nodejs.org,
-*             mime.js: https://github.com/bentomas/node-mime
-*             Math.uuid.js (v1.4) : http://www.broofa.com
-* Date: 2012-3 Draft
-*       2012-4 Update: Using async and mime.js
-*       2012-7 Update: Rename and reformat files
 */
 /*
 * WebSvr Namespace
@@ -656,9 +641,8 @@ var WebSvr = (function(){
 
     //Public: start http server
     self.start = function(){
-      options = options || {};
 
-      Object.extend(options, defaults);
+      options = _.extend(defaults, options);
 
       root = options.root;
       port = parseInt(options.port);
@@ -707,11 +691,6 @@ var WebSvr = (function(){
 var webSvr = new WebSvr({root:"./../"});
 webSvr.start();
 
-
-var	fs = require("fs"),
-    querystring = require("querystring");
-
-
 /*
 Filter: test/* => (session validation function);
   parse:parse the post data and stored to req.body;
@@ -733,7 +712,9 @@ Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
 */
-webSvr.url(/login.do/, function(req, res){
+webSvr.session(/login.do/, function(req, res){
+  var querystring = require("querystring");
+
   //TODO: Add an parameter to auto-complete querystring.parse(req.body);
   var qs = querystring.parse(req.body);
   if(qs.username == "admin" && qs.password == "12345678"){
@@ -749,7 +730,6 @@ webSvr.url(/login.do/, function(req, res){
     res.end("Wrong username/password");
   }
 });
-
 
 /*
 Uploader: upload.do => (receive handler)
@@ -770,8 +750,8 @@ Simple redirect API:
 webSvr.url(/combine/, ["svr/tool/Combine.js"]);
 //Mapping "hello" to a string, trying at http://localhost:8054/hello
 webSvr.url(/hello/, "Hello WebSvr!");
-//Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post
-webSvr.post(/post/, function(req, res){
+//Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
+webSvr.post(/post.htm/, function(req, res){
   res.writeHead(200, {"Content-Type": "text/html"});
   //Need session support
   res.write("You username is " + req.session.get("username"));

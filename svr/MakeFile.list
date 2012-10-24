@@ -1,10 +1,12 @@
-#config file
+#Config file
 #These modules will be crunched to one.
 #TODO: Need to support dictionary in the list;
 
-#reference
+#Global object and description
+Global.js
+
+#Reference
 ref/Math.uuid.js
-ref/Object.extend.js
 
 #WebSvr
 RequestParser.js

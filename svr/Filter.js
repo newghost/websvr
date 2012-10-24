@@ -11,7 +11,7 @@ var Filter = {
   */
   add : function(regExp, handler, options){
     var params = {regExp: regExp, handler: handler};
-    Filter.filters.push(Object.extend(params, options));
+    Filter.filters.push(_.extend(params, options));
   },
 
   /*
@@ -21,7 +21,7 @@ var Filter = {
   file: function(regExp, handler, options){
     var params = {regExp: regExp, handler: handler, file: true};
     //insert as the first elements
-    Filter.filters.splice(0, 0, Object.extend(params, options));
+    Filter.filters.splice(0, 0, _.extend(params, options));
   }
 };
 

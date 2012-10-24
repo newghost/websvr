@@ -1,14 +1,6 @@
 /*
-* Description: Create a static file server (http based).
-*              This will list all the files and directories via Node.Js.
-*              The behavior will be like directory browsing enabled in IIS,
+* Description: Create a Web Server (http based).
 * Author: Kris Zhang
-* Dependence: Node.js: http://www.nodejs.org,
-*             mime.js: https://github.com/bentomas/node-mime
-*             Math.uuid.js (v1.4) : http://www.broofa.com
-* Date: 2012-3 Draft
-*       2012-4 Update: Using async and mime.js
-*       2012-7 Update: Rename and reformat files
 */
 /*
 * WebSvr Namespace
@@ -211,9 +203,8 @@ var WebSvr = (function(){
 
     //Public: start http server
     self.start = function(){
-      options = options || {};
 
-      Object.extend(options, defaults);
+      options = _.extend(defaults, options);
 
       root = options.root;
       port = parseInt(options.port);

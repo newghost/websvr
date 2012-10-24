@@ -4,11 +4,6 @@
 var webSvr = new WebSvr({root:"./../"});
 webSvr.start();
 
-
-var	fs = require("fs"),
-    querystring = require("querystring");
-
-
 /*
 Filter: test/* => (session validation function);
   parse:parse the post data and stored to req.body;
@@ -30,7 +25,9 @@ Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
 */
-webSvr.url(/login.do/, function(req, res){
+webSvr.session(/login.do/, function(req, res){
+  var querystring = require("querystring");
+
   //TODO: Add an parameter to auto-complete querystring.parse(req.body);
   var qs = querystring.parse(req.body);
   if(qs.username == "admin" && qs.password == "12345678"){
@@ -46,7 +43,6 @@ webSvr.url(/login.do/, function(req, res){
     res.end("Wrong username/password");
   }
 });
-
 
 /*
 Uploader: upload.do => (receive handler)
@@ -67,8 +63,8 @@ Simple redirect API:
 webSvr.url(/combine/, ["svr/tool/Combine.js"]);
 //Mapping "hello" to a string, trying at http://localhost:8054/hello
 webSvr.url(/hello/, "Hello WebSvr!");
-//Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post
-webSvr.post(/post/, function(req, res){
+//Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
+webSvr.post(/post.htm/, function(req, res){
   res.writeHead(200, {"Content-Type": "text/html"});
   //Need session support
   res.write("You username is " + req.session.get("username"));
