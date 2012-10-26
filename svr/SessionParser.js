@@ -8,6 +8,8 @@ var SessionParser;
 
   SessionParser = (function(req, res, callback){
 
+    var sessionDir = Settings.sessionDir;
+
     var self = {
       //session id
       sid : null,
@@ -18,7 +20,7 @@ var SessionParser;
     //TODO
     self.set = function(key, val, callback){
 
-      var sessionfile = 'tmp/session/' + self.sid;
+      var sessionfile = sessionDir  + self.sid;
 
       key && (self.obj[key] = val);
 
@@ -56,7 +58,7 @@ var SessionParser;
       self.sid = sidVal;
 
       //We only receive the cookie from Http headers
-      var sessionfile = 'tmp/session/' + self.sid;
+      var sessionfile = sessionDir + self.sid;
 
       //here will be cause a bit of delay
       fs.exists(sessionfile, function (exists) {

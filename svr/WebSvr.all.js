@@ -7,6 +7,33 @@
 
 //Underscore global object;
 var _ = require("./lib/underscore");
+/*Settings.js*/
+/*
+Configurations
+*/
+var Settings = {
+  version: 0.022,
+
+  //root folder of web
+  root: "../",
+
+  //default port of web
+  port: 8054,
+  //enable https?
+  https: {
+    enable: false,
+    port: 8443,
+    options: {
+      //pfx: require("fs").readFileSync('server.pfx')
+    }
+  },
+
+  //session file stored here, must be end with "/"
+  sessionDir: "../tmp/session/",
+  //tempary upload file stored here, must be end with "/"
+  uploadDir:  "../tmp/upload/"
+};
+
 /*ref\Math.uuid.js*/
 /*!
 Math.uuid.js (v1.4)
@@ -140,6 +167,8 @@ var SessionParser;
 
   SessionParser = (function(req, res, callback){
 
+    var sessionDir = Settings.sessionDir;
+
     var self = {
       //session id
       sid : null,
@@ -150,7 +179,7 @@ var SessionParser;
     //TODO
     self.set = function(key, val, callback){
 
-      var sessionfile = 'tmp/session/' + self.sid;
+      var sessionfile = sessionDir  + self.sid;
 
       key && (self.obj[key] = val);
 
@@ -188,7 +217,7 @@ var SessionParser;
       self.sid = sidVal;
 
       //We only receive the cookie from Http headers
-      var sessionfile = 'tmp/session/' + self.sid;
+      var sessionfile = sessionDir + self.sid;
 
       //here will be cause a bit of delay
       fs.exists(sessionfile, function (exists) {
@@ -264,9 +293,11 @@ var Parser = function(req, res, mapper){
     //Need to parse the file in request?
     if(mapper.file && typeof req.body == "undefined"){
       //Must parser the request first, or the post data maybe lost;
-      var formidable = require('./lib/incoming_form');
+      var formidable = require('./lib/incoming_form'),
+          form = new formidable.IncomingForm();
 
-      var form = new formidable.IncomingForm();
+      form.uploadDir = Settings.uploadDir;
+
       form.parse(req, function(err, fields, files) {
         if (err){
           console.log(err);
@@ -641,26 +672,39 @@ var WebSvr = (function(){
 
     //Public: start http server
     self.start = function(){
-
-      options = _.extend(defaults, options);
+      //Update the default value of Settings
+      options = _.extend(Settings, options);
 
       root = options.root;
       port = parseInt(options.port);
-
-      //Expose the API
-      self.options = options;
 
       try{
         //Create http server
         var httpSvr = require("http").createServer(requestHandler);
         httpSvr.listen(port);
 
-        console.log("Running at"
+        console.log("Http server running at"
           ,"Root:", root
           ,"Port:", port
         );
 
         self.httpSvr = httpSvr;
+
+        //Create https server
+        if(options.https){
+          var httpsOptions = options.https.options,
+              httpsPort = options.https.port;
+
+          var httpsSvr = require("https").createServer(httpsOptions, requestHandler);
+          httpsSvr.listen(httpsPort);
+
+          console.log("Https server running at"
+            ,"Root:", root
+            ,"Port:", httpsPort
+          );
+
+          self.httpsSvr = httpsSvr;
+        }
 
         return true;
       }
@@ -688,7 +732,7 @@ var WebSvr = (function(){
 
 //Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
-var webSvr = new WebSvr({root:"./../"});
+var webSvr = new WebSvr();
 webSvr.start();
 
 /*

@@ -1,7 +1,7 @@
 
 //Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
-var webSvr = new WebSvr({root:"./../"});
+var webSvr = new WebSvr();
 webSvr.start();
 
 /*

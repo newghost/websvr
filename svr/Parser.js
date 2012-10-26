@@ -42,9 +42,11 @@ var Parser = function(req, res, mapper){
     //Need to parse the file in request?
     if(mapper.file && typeof req.body == "undefined"){
       //Must parser the request first, or the post data maybe lost;
-      var formidable = require('./lib/incoming_form');
+      var formidable = require('./lib/incoming_form'),
+          form = new formidable.IncomingForm();
 
-      var form = new formidable.IncomingForm();
+      form.uploadDir = Settings.uploadDir;
+
       form.parse(req, function(err, fields, files) {
         if (err){
           console.log(err);

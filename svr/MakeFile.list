@@ -4,11 +4,12 @@
 
 #Global object and description
 Global.js
+Settings.js
 
-#Reference
+#Reference: JavaScript library
 ref/Math.uuid.js
 
-#WebSvr
+#WebSvr Modules
 RequestParser.js
 SessionParser.js
 Parser.js
