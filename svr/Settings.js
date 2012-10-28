@@ -7,15 +7,18 @@ var Settings = {
   //root folder of web
   root: "../",
 
-  //default port of web
+  //http
+  http: true,
+  //default port of http
   port: 8054,
-  //enable https?
-  https: {
-    enable: false,
-    port: 8443,
-    options: {
-      //pfx: require("fs").readFileSync('server.pfx')
-    }
+
+  //https
+  https: false,
+  //default port of https
+  httpsPort: 8443,
+  httpsOpts: {
+    key: require("fs").readFileSync("cert/privatekey.pem"),
+    cert: require("fs").readFileSync("cert/certificate.pem")
   },
 
   //session file stored here, must be end with "/"

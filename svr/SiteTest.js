@@ -1,12 +1,12 @@
 
 //Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
-var webSvr = new WebSvr();
+var webSvr = new WebSvr({https:true, httpsPort:443});
 webSvr.start();
 
 /*
 Filter: test/* => (session validation function);
-  parse:parse the post data and stored to req.body;
+  parse:parse the post data and stored in req.body;
   session: init the session and stored in req.session; 
 */
 webSvr.filter(/test\/[\w\.]+/, function(req, res){
@@ -66,7 +66,7 @@ webSvr.url(/hello/, "Hello WebSvr!");
 //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
 webSvr.post(/post.htm/, function(req, res){
   res.writeHead(200, {"Content-Type": "text/html"});
-  //Need session support
+  //Witch session support: "{session: true}"
   res.write("You username is " + req.session.get("username"));
   res.write('<form action="" method="post"><input name="input" /></form><br/>');
   res.end('Received : ' + req.body);

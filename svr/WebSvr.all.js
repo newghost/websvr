@@ -17,15 +17,18 @@ var Settings = {
   //root folder of web
   root: "../",
 
-  //default port of web
+  //http
+  http: true,
+  //default port of http
   port: 8054,
-  //enable https?
-  https: {
-    enable: false,
-    port: 8443,
-    options: {
-      //pfx: require("fs").readFileSync('server.pfx')
-    }
+
+  //https
+  https: false,
+  //default port of https
+  httpsPort: 8443,
+  httpsOpts: {
+    key: require("fs").readFileSync("cert/privatekey.pem"),
+    cert: require("fs").readFileSync("cert/certificate.pem")
   },
 
   //session file stored here, must be end with "/"
@@ -673,13 +676,13 @@ var WebSvr = (function(){
     //Public: start http server
     self.start = function(){
       //Update the default value of Settings
-      options = _.extend(Settings, options);
+      options = _.extend({}, Settings, options);
 
       root = options.root;
       port = parseInt(options.port);
 
-      try{
-        //Create http server
+      //Create http server
+      if(options.http){
         var httpSvr = require("http").createServer(requestHandler);
         httpSvr.listen(port);
 
@@ -689,29 +692,24 @@ var WebSvr = (function(){
         );
 
         self.httpSvr = httpSvr;
-
-        //Create https server
-        if(options.https){
-          var httpsOptions = options.https.options,
-              httpsPort = options.https.port;
-
-          var httpsSvr = require("https").createServer(httpsOptions, requestHandler);
-          httpsSvr.listen(httpsPort);
-
-          console.log("Https server running at"
-            ,"Root:", root
-            ,"Port:", httpsPort
-          );
-
-          self.httpsSvr = httpsSvr;
-        }
-
-        return true;
       }
-      catch(err){
-        console.log("Can't setup server at port", port, err);
+
+      //Create https server
+      if(options.https){
+        var httpsOpts = options.httpsOpts,
+            httpsPort = options.httpsPort;
+
+        var httpsSvr = require("https").createServer(httpsOpts, requestHandler);
+        httpsSvr.listen(httpsPort);
+
+        console.log("Https server running at"
+          ,"Root:", root
+          ,"Port:", httpsPort
+        );
+
+        self.httpsSvr = httpsSvr;
       }
-      return false;
+
     };
 
     //Public: close http server;
@@ -732,12 +730,12 @@ var WebSvr = (function(){
 
 //Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
-var webSvr = new WebSvr();
+var webSvr = new WebSvr({https:true, httpsPort:443});
 webSvr.start();
 
 /*
 Filter: test/* => (session validation function);
-  parse:parse the post data and stored to req.body;
+  parse:parse the post data and stored in req.body;
   session: init the session and stored in req.session; 
 */
 webSvr.filter(/test\/[\w\.]+/, function(req, res){
@@ -797,7 +795,7 @@ webSvr.url(/hello/, "Hello WebSvr!");
 //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
 webSvr.post(/post.htm/, function(req, res){
   res.writeHead(200, {"Content-Type": "text/html"});
-  //Need session support
+  //Witch session support: "{session: true}"
   res.write("You username is " + req.session.get("username"));
   res.write('<form action="" method="post"><input name="input" /></form><br/>');
   res.end('Received : ' + req.body);

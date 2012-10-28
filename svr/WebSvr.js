@@ -204,13 +204,13 @@ var WebSvr = (function(){
     //Public: start http server
     self.start = function(){
       //Update the default value of Settings
-      options = _.extend(Settings, options);
+      options = _.extend({}, Settings, options);
 
       root = options.root;
       port = parseInt(options.port);
 
-      try{
-        //Create http server
+      //Create http server
+      if(options.http){
         var httpSvr = require("http").createServer(requestHandler);
         httpSvr.listen(port);
 
@@ -220,29 +220,24 @@ var WebSvr = (function(){
         );
 
         self.httpSvr = httpSvr;
-
-        //Create https server
-        if(options.https){
-          var httpsOptions = options.https.options,
-              httpsPort = options.https.port;
-
-          var httpsSvr = require("https").createServer(httpsOptions, requestHandler);
-          httpsSvr.listen(httpsPort);
-
-          console.log("Https server running at"
-            ,"Root:", root
-            ,"Port:", httpsPort
-          );
-
-          self.httpsSvr = httpsSvr;
-        }
-
-        return true;
       }
-      catch(err){
-        console.log("Can't setup server at port", port, err);
+
+      //Create https server
+      if(options.https){
+        var httpsOpts = options.httpsOpts,
+            httpsPort = options.httpsPort;
+
+        var httpsSvr = require("https").createServer(httpsOpts, requestHandler);
+        httpsSvr.listen(httpsPort);
+
+        console.log("Https server running at"
+          ,"Root:", root
+          ,"Port:", httpsPort
+        );
+
+        self.httpsSvr = httpsSvr;
       }
-      return false;
+
     };
 
     //Public: close http server;
