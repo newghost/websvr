@@ -15,7 +15,12 @@ var Handler;
   Static Handler instance
   */
   Handler = {
-
+    /*
+    url: add a new handler
+    expression: string/regexp [required]
+    handler:    [many types]  [required]
+    options:    object        [optional]
+    */
     url : function(expression, handler, options){
       var mapper = new Mapper(expression, handler, options);
       handlers.push(mapper);

@@ -134,11 +134,11 @@ var WebSvr = (function(){
       //Rewrite the write/writeHead functionalities of current response object
       var endFn = res.end;
       res.end = function(){
-        //Execute old end;
+        //Execute old end
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
         res.write = res.writeHead = function(){
-          console.log("response is already end, response write ignored!")
+          console.log("response is already end, response.write ignored!")
         };
       };
 
@@ -169,7 +169,7 @@ var WebSvr = (function(){
 
     //Explose API
     //Filter
-    self.filter = Filter.add;
+    self.filter = Filter.filter;
     self.file = Filter.file;
 
     //Handler

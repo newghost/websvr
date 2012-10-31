@@ -23,6 +23,9 @@ Mapper.prototype = {
     var self = this,
         expression = self.expression;
 
+    //No expression? It's a general filter mapper
+    if(!expression) return true;
+
     switch(expression.constructor){
       case String: return req.url.indexOf(expression) > -1;
       case RegExp: return expression.test(req.url);

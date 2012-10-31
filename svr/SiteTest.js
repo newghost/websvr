@@ -5,9 +5,20 @@ var webSvr = new WebSvr({https:true, httpsPort:8443});
 webSvr.start();
 
 /*
-Filter: test/* => (session validation function);
-  parse:parse the post data and stored in req.body;
+General filter: parse the post data / session before all request
+  parse:   parse the post data and stored in req.body;
   session: init the session and stored in req.session; 
+*/
+webSvr.filter(function(req, res){
+  //TODO: Add greeting words in filter
+  //res.write("Hello WebSvr!<br/>");
+
+  //Link to next filter
+  req.filter.next(req, res);
+}, {parse:true, session:true});
+
+/*
+Session Filter: protect test/* folder => (validation by session);
 */
 webSvr.filter(/test\/[\w\.]+/, function(req, res){
   //It's not index.htm/login.do, do the session validation
@@ -17,7 +28,7 @@ webSvr.filter(/test\/[\w\.]+/, function(req, res){
 
   //Link to next filter
   req.filter.next(req, res);
-}, {parse: true, session: true});
+});
 
 
 /*

@@ -157,6 +157,9 @@ Mapper.prototype = {
     var self = this,
         expression = self.expression;
 
+    //No expression? It's a general filter mapper
+    if(!expression) return true;
+
     switch(expression.constructor){
       case String: return req.url.indexOf(expression) > -1;
       case RegExp: return expression.test(req.url);
@@ -380,9 +383,19 @@ var Filter = {
   filters : [],
   
   /*
-  add a new filter
+  filter: add a new filter
+  expression: string/regexp [optional]
+  handler:    function      [required]
+  options:    object        [optional]
   */
-  add : function(expression, handler, options){
+  filter : function(expression, handler, options){
+    //The first parameter is Function => (handler, options)
+    if(expression.constructor == Function){
+      options = handler;
+      handler = expression;
+      expression = null;
+    }
+
     var mapper = new Mapper(expression, handler, options);
     Filter.filters.push(mapper);
   },
@@ -453,7 +466,12 @@ var Handler;
   Static Handler instance
   */
   Handler = {
-
+    /*
+    url: add a new handler
+    expression: string/regexp [required]
+    handler:    [many types]  [required]
+    options:    object        [optional]
+    */
     url : function(expression, handler, options){
       var mapper = new Mapper(expression, handler, options);
       handlers.push(mapper);
@@ -650,11 +668,11 @@ var WebSvr = (function(){
       //Rewrite the write/writeHead functionalities of current response object
       var endFn = res.end;
       res.end = function(){
-        //Execute old end;
+        //Execute old end
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
         res.write = res.writeHead = function(){
-          console.log("response is already end, response write ignored!")
+          console.log("response is already end, response.write ignored!")
         };
       };
 
@@ -685,7 +703,7 @@ var WebSvr = (function(){
 
     //Explose API
     //Filter
-    self.filter = Filter.add;
+    self.filter = Filter.filter;
     self.file = Filter.file;
 
     //Handler
@@ -778,9 +796,20 @@ var webSvr = new WebSvr({https:true, httpsPort:8443});
 webSvr.start();
 
 /*
-Filter: test/* => (session validation function);
-  parse:parse the post data and stored in req.body;
+General filter: parse the post data / session before all request
+  parse:   parse the post data and stored in req.body;
   session: init the session and stored in req.session; 
+*/
+webSvr.filter(function(req, res){
+  //TODO: Add greeting words in filter
+  //res.write("Hello WebSvr!<br/>");
+
+  //Link to next filter
+  req.filter.next(req, res);
+}, {parse:true, session:true});
+
+/*
+Session Filter: protect test/* folder => (validation by session);
 */
 webSvr.filter(/test\/[\w\.]+/, function(req, res){
   //It's not index.htm/login.do, do the session validation
@@ -790,7 +819,7 @@ webSvr.filter(/test\/[\w\.]+/, function(req, res){
 
   //Link to next filter
   req.filter.next(req, res);
-}, {parse: true, session: true});
+});
 
 
 /*

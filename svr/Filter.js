@@ -7,9 +7,19 @@ var Filter = {
   filters : [],
   
   /*
-  add a new filter
+  filter: add a new filter
+  expression: string/regexp [optional]
+  handler:    function      [required]
+  options:    object        [optional]
   */
-  add : function(expression, handler, options){
+  filter : function(expression, handler, options){
+    //The first parameter is Function => (handler, options)
+    if(expression.constructor == Function){
+      options = handler;
+      handler = expression;
+      expression = null;
+    }
+
     var mapper = new Mapper(expression, handler, options);
     Filter.filters.push(mapper);
   },
