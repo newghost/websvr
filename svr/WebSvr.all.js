@@ -131,6 +131,53 @@ Dual licensed under the MIT and GPL licenses.
   };
 })();
 
+/*Mapper.js*/
+/*
+Mapper: Used for Filter & Handler,
+expression: required parameter
+handler: required parameter
+options: other optional parameters
+*/
+
+var Mapper = function(expression, handler, options){
+  var self = this;
+
+  self.expression = expression;
+  self.handler = handler;
+
+  //Has other parameters?
+  self.extend(options);
+};
+
+Mapper.prototype = {
+  /*
+  Does this mapper matched this request?
+  */
+  match: function(req){
+    var self = this,
+        expression = self.expression;
+
+    switch(expression.constructor){
+      case String: return req.url.indexOf(expression) > -1;
+      case RegExp: return expression.test(req.url);
+    }
+
+    return false;
+  },
+
+  /*
+  Add optional parameters on current mapper
+  i.e:
+  session:  boolean
+  file:     boolean
+  parse:    boolean
+  */ 
+  extend: function(options){
+    for(key in options){
+      this[key] = options[key]
+    }
+  }
+};
 /*RequestParser.js*/
 /*
 Request parser, parse the data in request body via 
@@ -335,19 +382,19 @@ var Filter = {
   /*
   add a new filter
   */
-  add : function(regExp, handler, options){
-    var params = {regExp: regExp, handler: handler};
-    Filter.filters.push(_.extend(params, options));
+  add : function(expression, handler, options){
+    var mapper = new Mapper(expression, handler, options);
+    Filter.filters.push(mapper);
   },
 
   /*
   file receiver: it's a specfic filter,
   this filter should be always at the top of the filter list
   */
-  file: function(regExp, handler, options){
-    var params = {regExp: regExp, handler: handler, file: true};
+  file: function(expression, handler, options){
+    var mapper = new Mapper(expression, handler, {file: true}); 
     //insert as the first elements
-    Filter.filters.splice(0, 0, _.extend(params, options));
+    Filter.filters.splice(0, 0, mapper);
   }
 };
 
@@ -378,8 +425,10 @@ FilterChain.prototype = {
       req.next(req, res);
     }, options);
     */
-    if(mapper.regExp && mapper.regExp.test(req.url)){
-      console.log("filter matched", self.idx, mapper.regExp, req.url);
+    if(mapper.match(req)){
+
+      console.log("filter matched", self.idx, mapper.expression, req.url);
+
       Parser(req, res, mapper);
     }else{
       self.next(req, res);
@@ -405,20 +454,19 @@ var Handler;
   */
   Handler = {
 
-    url : function(regExp, handler, options){
-      var params = {regExp: regExp, handler: handler};
-      handlers.push(_.extend(params, options));
+    url : function(expression, handler, options){
+      var mapper = new Mapper(expression, handler, options);
+      handlers.push(mapper);
     },
 
     //Post: Parse the post data by default;
-    post : function(regExp, handler, options){
-      var params = { parse: true };
-      this.url(regExp, handler, _.extend(params, options));
+    post : function(expression, handler, options){
+      this.url(expression, handler, _.extend({ parse: true }, options));
     },
 
     //Session: Parse the session and post by default;
-    session : function(regExp, handler){
-      this.url(regExp, handler, { parse:true, session: true });
+    session : function(expression, handler){
+      this.url(expression, handler, { parse: true, session: true });
     },
 
     handle : function(req, res){
@@ -426,41 +474,37 @@ var Handler;
       for(var i = 0, len = handlers.length; i < len ; i++){
 
         var mapper = handlers[i];
-        if(mapper.regExp && mapper.regExp.test(req.url)){
+        if(mapper.match(req)){
 
-          console.log("handler matched", i, mapper.regExp, req.url);
+          console.log("handler matched", i, mapper.expression, req.url);
 
-          try{
-            var handler = mapper.handler,
-                type = handler.constructor.name;
+          var handler = mapper.handler,
+              type = handler.constructor.name;
 
-            switch(type){
-              //function: treated it as custom function handler
-              case "Function":
-                Parser(req, res, mapper);
-                break;
+          switch(type){
+            //function: treated it as custom function handler
+            case "Function":
+              Parser(req, res, mapper);
+              break;
 
-              //string: treated it as content
-              case "String":
-                res.writeHead(200, { "Content-Type": "text/html" });
-                res.end(handler);
-                break;
+            //string: treated it as content
+            case "String":
+              res.writeHead(200, { "Content-Type": "text/html" });
+              res.end(handler);
+              break;
 
-              //array: treated it as a file.
-              case "Array":
-                res.writeFile(handler[0]);
-                break;
-            }
+            //array: treated it as a file.
+            case "Array":
+              res.writeFile(handler[0]);
+              break;
           }
-          catch(err){ 
-            console.log(err)
-          }
-
           return true;
         }
       }
+
       return false;
-    }   //end of handler
+
+    }   //end of handle
 
   };
 
@@ -730,7 +774,7 @@ var WebSvr = (function(){
 
 //Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
-var webSvr = new WebSvr({https:true, httpsPort:443});
+var webSvr = new WebSvr({https:true, httpsPort:8443});
 webSvr.start();
 
 /*

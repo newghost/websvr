@@ -7,7 +7,7 @@ Description:
 Create a Web Server (http based), all the files will be combined into one, in order to use the various kinds of javascript libraries in Node.js; 
 
 
-Version: 0.021
+Version: 0.024
 --------------
 - Filter: A request will mapping all the filters first, and then pass to the Handler;
 - Handler: When a request matched a handler, it will returned, so only one handler will be matched;
@@ -16,9 +16,6 @@ Version: 0.021
   https://github.com/felixge/node-formidable/
 - Underscore: Add underscore a utility-belt library for JavaScript
   https://github.com/documentcloud/underscore
-
-Version: 0.005
---------------
 - MIME: Suppor mime header, integrate https://github.com/broofa/node-mime
 
 Start: Edit in SiteTest.js or Create a new Site.js and added to MakeFile.list

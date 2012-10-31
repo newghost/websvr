@@ -9,19 +9,19 @@ var Filter = {
   /*
   add a new filter
   */
-  add : function(regExp, handler, options){
-    var params = {regExp: regExp, handler: handler};
-    Filter.filters.push(_.extend(params, options));
+  add : function(expression, handler, options){
+    var mapper = new Mapper(expression, handler, options);
+    Filter.filters.push(mapper);
   },
 
   /*
   file receiver: it's a specfic filter,
   this filter should be always at the top of the filter list
   */
-  file: function(regExp, handler, options){
-    var params = {regExp: regExp, handler: handler, file: true};
+  file: function(expression, handler, options){
+    var mapper = new Mapper(expression, handler, {file: true}); 
     //insert as the first elements
-    Filter.filters.splice(0, 0, _.extend(params, options));
+    Filter.filters.splice(0, 0, mapper);
   }
 };
 
@@ -52,8 +52,10 @@ FilterChain.prototype = {
       req.next(req, res);
     }, options);
     */
-    if(mapper.regExp && mapper.regExp.test(req.url)){
-      console.log("filter matched", self.idx, mapper.regExp, req.url);
+    if(mapper.match(req)){
+
+      console.log("filter matched", self.idx, mapper.expression, req.url);
+
       Parser(req, res, mapper);
     }else{
       self.next(req, res);

@@ -10,6 +10,7 @@ Settings.js
 ref/Math.uuid.js
 
 #WebSvr Modules
+Mapper.js
 RequestParser.js
 SessionParser.js
 Parser.js
