@@ -24,7 +24,6 @@ var WebSvr = (function(){
     //Parameters
     //Count: How many files?
     var self = this,
-        count = 0,
         root,
         port;
 
@@ -65,49 +64,8 @@ var WebSvr = (function(){
 
       fs.stat(fullPath, function(err, stat){
 
-        count = 0;
-
         //Consider as file not found
         if(err) return self.write404(res);
-
-        //List all the files in a directory.
-        var listFiles = function(callback){
-
-          fs.readdir(fullPath, function(err, files){
-            if(err){
-              console.log(err);
-              return;
-            }
-
-            for(var idx = 0, len = files.length; idx < len; idx++){
-              //Persistent the idx before make the sync process
-              (function(idx){
-                var filePath = path.join(fullPath, files[idx]),
-                    fileUrl = urlFormat(path.join(url, files[idx]));
-
-                fs.stat(filePath, function(err, stat){
-                  count++;
-
-                  if(err){
-                    console.log(err);
-                  }else{
-                    res.write(
-                      date(stat.mtime)
-                      + "\t" + size(stat.size)
-                      + anchor(files[idx], fileUrl)
-                      + "\r\n"
-                    );
-                  }
-
-                  count == len && callback();
-                });
-              })(idx);
-            }
-
-            //If it's an empty directory
-            (len == 0) && callback();
-          });
-        };
 
         //Is file? Open this file and send to client.
         if(stat.isFile()){
@@ -116,14 +74,11 @@ var WebSvr = (function(){
 
         //Is Directory? List all the files and folders.
         else if(stat.isDirectory()){
-          res.writeHead(200, {"Content-Type": "text/html"});
-          res.write("<h2>http://" + req.headers.host + url + "</h2><hr/>");
-          res.write("<pre>");
-          res.write(anchor("[To Parent Directory]", url.substr(0, url.lastIndexOf('/'))) + "\r\n\r\n");
-          listFiles(function(){
-            res.write("</pre><hr/>");
-            res.end("<h5>Count: " + count + "</h5>");
-          });
+          if(options.listDir){
+            self.listDir(req, res, fullPath);
+          }else{
+            self.write403(res);
+          }
         }
 
       });
@@ -182,7 +137,65 @@ var WebSvr = (function(){
       return path.join(root, filePath);
     };
 
-    //Write file, filePath is a relative;
+    //List all the files in a directory
+    self.listDir = function(req, res, dir){
+      var url = req.url,
+          cur = 0,
+          len = 0;
+
+      var listBegin = function(){
+        res.writeHead(200, {"Content-Type": "text/html"});
+        res.write("<h2>http://" + req.headers.host + url + "</h2><hr/>");
+        res.write("<pre>");
+        res.write(anchor("[To Parent Directory]", url.substr(0, url.lastIndexOf('/'))) + "\r\n\r\n");
+      };
+
+      var listEnd = function(){
+        res.write("</pre><hr/>");
+        res.end("<h5>Count: " + len + "</h5>");
+      };
+
+      listBegin();
+
+      fs.readdir(dir, function(err, files){
+        if(err){
+          listEnd();
+          console.log(err);
+          return;
+        }
+
+        len = files.length;
+
+        for(var idx = 0; idx < len; idx++){
+          //Persistent the idx before make the sync process
+          (function(idx){
+            var filePath = path.join(dir, files[idx]),
+                fileUrl = urlFormat(path.join(url, files[idx]));
+
+            fs.stat(filePath, function(err, stat){
+              cur++;
+
+              if(err){
+                console.log(err);
+              }else{
+                res.write(
+                  date(stat.mtime)
+                  + "\t" + size(stat.size)
+                  + anchor(files[idx], fileUrl)
+                  + "\r\n"
+                );
+              }
+
+              (cur == len) && listEnd();
+            });
+          })(idx);
+        }
+
+        (len == 0) && listEnd();
+      });
+    };
+
+    //Write file, filePath is relative path
     self.writeFile = function(res, filePath, cb){
       filePath = path.join(root, filePath);
       fs.exists(filePath, function(exist){
@@ -194,6 +207,11 @@ var WebSvr = (function(){
           cb ? cb(exist) : self.write404(res);
         }
       });
+    };
+
+    self.write403 = function(res){
+      res.writeHead(403, {"Content-Type": "text/html"});
+      res.end("Access forbidden!");
     };
 
     self.write404 = function(res){

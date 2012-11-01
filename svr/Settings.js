@@ -7,6 +7,9 @@ var Settings = {
   //root folder of web
   root: "../",
 
+  //list files in directory
+  listDir: false,
+
   //http
   http: true,
   //default port of http
