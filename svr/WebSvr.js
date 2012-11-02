@@ -66,6 +66,11 @@ var WebSvr = (function(){
         self.writeFile(res, filePath, cb);
       };
 
+      res.redirect = function(url, status){
+        res.writeHead(status ? status : 302, { "Location": url });
+        res.end();
+      };
+
       //Define filter object
       req.filter = new FilterChain(function(){
         //if handler not match, send the request
@@ -115,6 +120,10 @@ var WebSvr = (function(){
         }
       });
     };
+
+    //TODO: Support 301 move permanently
+
+    //TODO: Support 304 client-side cache
 
     self.write403 = function(res){
       res.writeHead(403, {"Content-Type": "text/html"});

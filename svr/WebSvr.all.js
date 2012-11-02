@@ -706,6 +706,11 @@ var WebSvr = (function(){
         self.writeFile(res, filePath, cb);
       };
 
+      res.redirect = function(url, status){
+        res.writeHead(status ? status : 302, { "Location": url });
+        res.end();
+      };
+
       //Define filter object
       req.filter = new FilterChain(function(){
         //if handler not match, send the request
@@ -755,6 +760,10 @@ var WebSvr = (function(){
         }
       });
     };
+
+    //TODO: Support 301 move permanently
+
+    //TODO: Support 304 client-side cache
 
     self.write403 = function(res){
       res.writeHead(403, {"Content-Type": "text/html"});
@@ -860,7 +869,7 @@ Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
 */
-webSvr.session(/login.do/, function(req, res){
+webSvr.session("login.do", function(req, res){
   var querystring = require("querystring");
 
   //TODO: Add an parameter to auto-complete querystring.parse(req.body);
@@ -882,7 +891,7 @@ webSvr.session(/login.do/, function(req, res){
 /*
 Uploader: upload.do => (receive handler)
 */
-webSvr.file(/upload.do/, function(req, res){
+webSvr.file("upload.do", function(req, res){
   res.writeHead(200, {"Content-Type": "text/plain"});
   //Upload file is stored in req.files
   //form fields is stored in req.body
@@ -890,16 +899,23 @@ webSvr.file(/upload.do/, function(req, res){
   res.end(JSON.stringify(req.files));
 });
 
+/*
+Redirect: redirect request, try at: http://localhost:8054/redirect
+*/
+webSvr.url("redirect", function(req, res){
+  res.redirect("/svr/websvr.all.js");
+});
+
 
 /*
 Simple redirect API:
 */
 //Mapping "combine" to tool/Combine.js, trying at: http://localhost:8054/combine
-webSvr.url(/combine/, ["svr/tool/Combine.js"]);
+webSvr.url("combine", ["svr/tool/Combine.js"]);
 //Mapping "hello" to a string, trying at http://localhost:8054/hello
-webSvr.url(/hello/, "Hello WebSvr!");
+webSvr.url("hello", "Hello WebSvr!");
 //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-webSvr.post(/post.htm/, function(req, res){
+webSvr.post("post.htm", function(req, res){
   res.writeHead(200, {"Content-Type": "text/html"});
   //Witch session support: "{session: true}"
   res.write("You username is " + req.session.get("username"));
