@@ -46,7 +46,7 @@ Session based authentication (session stored in files), all the request under "t
     }, {parse:true, session:true});
 
     /*
-    Session Filter: protect test/* folder => (validation by session);
+    Session Filter: protect test/* folder => (validate by session);
     */
     webSvr.filter(/test\/[\w\.]+/, function(req, res){
       //It's not index.htm/login.do, do the session validation
