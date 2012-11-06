@@ -4,13 +4,13 @@ when parse complete, execute the callback, with response data;
 */
 var RequestParser;
 
-(function(){
+(function() {
 
-  //TODO: Is there a bug, how about 2 users update a file, what's will happened for buffer;
+  //TODO: Is there a bug, how about 2 users update a file, what will happened for this buffer?
   var MAX_SIZE = 16 * 1024 * 1024,
       buffer = new Buffer(MAX_SIZE);
 
-  RequestParser = function(req, res, callback){
+  RequestParser = function(req, res, callback) {
     var length = 0, data = "";
 
     req.on('data', function(chunk) {

@@ -15,6 +15,9 @@ var Settings = {
   //default port of http
   port: 8054,
 
+  //enable debug information output?
+  debug: false,
+
   //https
   https: false,
   //default port of https

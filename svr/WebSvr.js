@@ -5,9 +5,9 @@
 /*
 * WebSvr Namespace
 */
-var WebSvr = (function(){
+var WebSvr = (function() {
 
-  var server = function(options){
+  var server = function(options) {
     //Library
     var fs = require("fs"),
         path = require("path"),
@@ -19,7 +19,7 @@ var WebSvr = (function(){
         root,
         port;
 
-    var fileHandler = function(req, res){
+    var fileHandler = function(req, res) {
 
       var url = req.url,
           hasQuery = url.indexOf("?");
@@ -29,18 +29,18 @@ var WebSvr = (function(){
 
       var fullPath = path.join(root, url);
 
-      fs.stat(fullPath, function(err, stat){
+      fs.stat(fullPath, function(err, stat) {
 
         //Consider as file not found
-        if(err) return self.write404(res);
+        if (err) return self.write404(res);
 
         //Is file? Open this file and send to client.
-        if(stat.isFile()){
+        if (stat.isFile()) {
           writeFile(res, fullPath);
         }
 
         //Is Directory? List all the files and folders.
-        else if(stat.isDirectory()){
+        else if (stat.isDirectory()) {
           options.listDir
             ? ListDir.list(req, res, fullPath)
             : self.write403(res);
@@ -49,30 +49,30 @@ var WebSvr = (function(){
       });
     };
 
-    var requestHandler = function(req, res){
+    var requestHandler = function(req, res) {
       //Response may be shutdown when do the filter, in order not to cause exception,
       //Rewrite the write/writeHead functionalities of current response object
       var endFn = res.end;
-      res.end = function(){
+      res.end = function() {
         //Execute old end
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
-        res.write = res.writeHead = function(){
+        res.write = res.writeHead = function() {
           console.log("response is already end, response.write ignored!")
         };
       };
 
-      res.writeFile = function(filePath, cb){
+      res.writeFile = function(filePath, cb) {
         self.writeFile(res, filePath, cb);
       };
 
-      res.redirect = function(url, status){
+      res.redirect = function(url, status) {
         res.writeHead(status ? status : 302, { "Location": url });
         res.end();
       };
 
       //Define filter object
-      req.filter = new FilterChain(function(){
+      req.filter = new FilterChain(function() {
         //if handler not match, send the request
         !Handler.handle(req, res) && fileHandler(req, res);
       });
@@ -81,9 +81,9 @@ var WebSvr = (function(){
       req.filter.next(req, res);
     };
 
-    var writeFile = function(res, fullPath){
-      fs.readFile(fullPath, function(err, data){
-        if(err){
+    var writeFile = function(res, fullPath) {
+      fs.readFile(fullPath, function(err, data) {
+        if (err) {
           console.log(err);
           return;
         }
@@ -103,15 +103,15 @@ var WebSvr = (function(){
     self.session = Handler.session;
 
     //Get a fullpath of a request
-    self.getFullPath = function(filePath){
+    self.getFullPath = function(filePath) {
       return path.join(root, filePath);
     };
 
     //Write file, filePath is relative path
-    self.writeFile = function(res, filePath, cb){
+    self.writeFile = function(res, filePath, cb) {
       filePath = path.join(root, filePath);
-      fs.exists(filePath, function(exist){
-        if(exist){
+      fs.exists(filePath, function(exist) {
+        if (exist) {
           writeFile(res, filePath);
           cb && cb(exist);
         }else{
@@ -125,18 +125,18 @@ var WebSvr = (function(){
 
     //TODO: Support 304 client-side cache
 
-    self.write403 = function(res){
+    self.write403 = function(res) {
       res.writeHead(403, {"Content-Type": "text/html"});
       res.end("Access forbidden!");
     };
 
-    self.write404 = function(res){
+    self.write404 = function(res) {
       res.writeHead(404, {"Content-Type": "text/html"});
       res.end("File not found!");
     };
 
     //Public: start http server
-    self.start = function(){
+    self.start = function() {
       //Update the default value of Settings
       options = _.extend({}, Settings, options);
 
@@ -144,7 +144,7 @@ var WebSvr = (function(){
       port = parseInt(options.port);
 
       //Create http server
-      if(options.http){
+      if (options.http) {
         var httpSvr = require("http").createServer(requestHandler);
         httpSvr.listen(port);
 
@@ -157,7 +157,7 @@ var WebSvr = (function(){
       }
 
       //Create https server
-      if(options.https){
+      if (options.https) {
         var httpsOpts = options.httpsOpts,
             httpsPort = options.httpsPort;
 
@@ -171,10 +171,15 @@ var WebSvr = (function(){
 
         self.httpsSvr = httpsSvr;
       }
+
+      //diable console.log information
+      if (!options.debug) {
+        console.log = function(){};
+      }
     };
 
     //Public: close http server;
-    self.close = function(){
+    self.close = function() {
       self.httpSvr && self.httpSvr.close();
       self.httpsSvr && self.httpsSvr.close();
     };

@@ -2,11 +2,11 @@
 var SessionParser;
 
 //TODO: Need a child process of clear session
-(function(){
+(function() {
 
   var fs = require("fs");
 
-  SessionParser = (function(req, res, callback){
+  SessionParser = (function(req, res, callback) {
 
     var sessionDir = Settings.sessionDir;
 
@@ -18,14 +18,14 @@ var SessionParser;
     };
 
     //TODO
-    self.set = function(key, val, callback){
+    self.set = function(key, val, callback) {
 
       var sessionfile = sessionDir  + self.sid;
 
       key && (self.obj[key] = val);
 
-      fs.writeFile( sessionfile, JSON.stringify(self.obj), function(err){
-        if(err){
+      fs.writeFile(sessionfile, JSON.stringify(self.obj), function(err) {
+        if (err) {
           console.log(err);
           return;
         }
@@ -35,11 +35,11 @@ var SessionParser;
     };
 
     //TO DO
-    self.get = function(key){
+    self.get = function(key) {
       return self.obj[key];
     };
 
-    self.init = function(){
+    self.init = function() {
       var sidKey = "_wsid",
           sidVal,
           cookie = req.headers.cookie || "";
@@ -51,7 +51,7 @@ var SessionParser;
       (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 38));
 
       //sid doesn't exist, create it;
-      if(idx < 0 || sidVal.length != 32){
+      if (idx < 0 || sidVal.length != 32) {
         sidVal = Math.uuid(32);
         res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
       };
@@ -62,7 +62,7 @@ var SessionParser;
 
       //here will be cause a bit of delay
       fs.exists(sessionfile, function (exists) {
-        if(exists){
+        if (exists) {
           fs.readFile( sessionfile, function (err, data) {
             if (err) {
               console.log(err);

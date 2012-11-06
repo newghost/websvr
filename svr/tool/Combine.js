@@ -7,7 +7,7 @@
 //Combine namespace
 var Combine;
 
-(function(){
+(function() {
 
   var fs = require("fs"),
       path = require("path"),
@@ -21,10 +21,10 @@ var Combine;
     watch: false,       //listen on the changes?
 
     //Interface
-    init: function(sourceFile, targetFile, watch){
+    init: function(sourceFile, targetFile, watch) {
       //Combine type, it's a directory or cfg file
-      fs.stat(sourceFile, function(err, stat){
-        if(err) {
+      fs.stat(sourceFile, function(err, stat) {
+        if (err) {
           console.log(err);
           return;
         }
@@ -34,43 +34,42 @@ var Combine;
         combine.watch = watch;
 
         //It's a configuration files or dictionary
-        if(stat.isFile()){
+        if (stat.isFile()) {
           combine.setCfg(sourceFile);
-        }else{
+        } else {
           combine.setDir(sourceFile);
         }
       });
     },
 
     //get output stream
-    getStream: function(){
+    getStream: function() {
       var stream;
-      try{
+      try {
         stream = fs.createWriteStream(combine.targetFile);
-      }
-      catch(err){
+      } catch (err) {
         console.log("Can't create output stream: ", err);
       }
       return stream;
     },
 
     //get files from cfgFile, return absolute file path
-    getFiles: function(cfgPath){
+    getFiles: function(cfgPath) {
       var contents = fs.readFileSync(cfgPath, 'utf-8'),
           files = [],
           lastIdx = cfgPath.lastIndexOf('\\'),
           dir = cfgPath.substring(0, lastIdx > -1 ? lastIdx : cfgPath.lastIndexOf('/') );
 
       //read a file line-by-line
-      contents.match(/[^\r\n]+/g).forEach(function(line){
+      contents.match(/[^\r\n]+/g).forEach(function(line) {
         //ignore comments that begin with '#'
-        if(line[0] != '#'){
+        if (line[0] != '#') {
           files.push(path.join(dir, line));
         }
       });
 
-      combine.watch && files.forEach(function(file){
-        if(combine.list.indexOf(file) < 0){
+      combine.watch && files.forEach(function(file) {
+        if (combine.list.indexOf(file) < 0) {
           combine.watchFile(file);
           combine.list.push(file);
         };
@@ -82,18 +81,18 @@ var Combine;
     },
 
     //Watch changes on source folder
-    setDir: function(directory){
+    setDir: function(directory) {
       //Combine at the first running, then watching the changes.
-      if(combine.combineDir(directory)){
-        combine.watch && fs.watch(directory, function(){
+      if (combine.combineDir(directory)) {
+        combine.watch && fs.watch(directory, function() {
           combine.combineDir(directory);
         });
       }
     },
 
     //Watch chagnes on configuration fiel
-    setCfg: function(configuration){
-      var combineCfg = function(){
+    setCfg: function(configuration) {
+      var combineCfg = function() {
         //get file list from the configuration files.
         combine.getFiles(configuration);
         combine.combine();
@@ -107,29 +106,28 @@ var Combine;
     },
 
     //Watch changes on a file
-    watchFile: function(file){
-      try{
-        fs.watch(file, function(){
+    watchFile: function(file) {
+      try {
+        fs.watch(file, function() {
           combine.combine();
         });
-      }
-      catch(err){
+      } catch (err) {
         console.log(file, err);
       }
     },
 
     //Combine directory
-    combineDir: function(directory){
-      try{
+    combineDir: function(directory) {
+      try {
         var allFiles = fs.readdirSync(directory),
             //File name must be consist of numbers characters or "-" "_", "."
             fileReg = /^[a-zA-Z0-9-_\.]+$/,
             files = [];
 
-        allFiles.forEach(function(file){
-          if(fileReg.test(file)){
+        allFiles.forEach(function(file) {
+          if (fileReg.test(file)) {
             files.push(path.join(directory, file));
-          }else{
+          } else {
             console.log("Skip file:" + file);
           }
         });
@@ -137,37 +135,36 @@ var Combine;
         combine.files = files;
 
         return combine.combine();
-      }
-      catch(err){
+      } catch (err) {
         console.log(err);
         return false;
       }
     },
 
     //Combine set of files into one
-    combine: function(){
+    combine: function() {
 
       //Prevent other request within 1 seconds;
-      if(timerID) return;
+      if (timerID) return;
 
-      timerID = setTimeout(function(){
+      timerID = setTimeout(function() {
         timerID = null;
       }, 1000);
 
       var oStream = combine.getStream(), r = true;
-      if(!oStream){
+      if (!oStream) {
         return false;
       }
 
       var files = combine.files;
 
-      try{
-        files.forEach(function(file){
+      try {
+        files.forEach(function(file) {
           var stat = fs.statSync(file);
 
-          if(!stat.isFile()){
+          if (!stat.isFile()) {
             console.log("Skip folder:" + file);
-          }else{
+          } else {
             var data = fs.readFileSync(file);
             oStream.write("/*" + file + "*/\r\n");
             oStream.write(data);
@@ -184,8 +181,7 @@ var Combine;
           ", date:", new Date().toTimeString(),
           "\r\n\r\n"
         );
-      }
-      catch(err){
+      } catch (err) {
         console.log(err);
         r = false;
       }
@@ -203,20 +199,20 @@ var Combine;
 * -o filepath: output files
 * -w: keep watch the changes?
 */
-(function(){
+(function() {
 
   /*
    * parsing parameters from command line
    * etc, node combine.js -i configfile.path -o outputfile.path
    * the parameter will be: '-' + one character, like: parsing('-o');
    */
-  var parsing = function(args, key){
-    if(!key || key.length != 2 || key[0] != '-') return;
+  var parsing = function(args, key) {
+    if (!key || key.length != 2 || key[0] != '-') return;
 
     var reg = new RegExp(" " + key + "((?! -\\w).)*", "g"),
         param = args.match(reg);
 
-    if(param && param[0]){
+    if (param && param[0]) {
       return param[0].substr(4, 500);
     }
   };

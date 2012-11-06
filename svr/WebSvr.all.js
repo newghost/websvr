@@ -35,6 +35,9 @@ var Settings = {
   //default port of http
   port: 8054,
 
+  //enable debug information output?
+  debug: false,
+
   //https
   https: false,
   //default port of https
@@ -152,7 +155,7 @@ handler: required parameter
 options: other optional parameters
 */
 
-var Mapper = function(expression, handler, options){
+var Mapper = function(expression, handler, options) {
   var self = this;
 
   self.expression = expression;
@@ -166,14 +169,14 @@ Mapper.prototype = {
   /*
   Does this mapper matched this request?
   */
-  match: function(req){
+  match: function(req) {
     var self = this,
         expression = self.expression;
 
     //No expression? It's a general filter mapper
-    if(!expression) return true;
+    if (!expression) return true;
 
-    switch(expression.constructor){
+    switch(expression.constructor) {
       case String: return req.url.indexOf(expression) > -1;
       case RegExp: return expression.test(req.url);
     }
@@ -188,8 +191,8 @@ Mapper.prototype = {
   file:     boolean
   parse:    boolean
   */ 
-  extend: function(options){
-    for(key in options){
+  extend: function(options) {
+    for(key in options) {
       this[key] = options[key]
     }
   }
@@ -201,13 +204,13 @@ when parse complete, execute the callback, with response data;
 */
 var RequestParser;
 
-(function(){
+(function() {
 
-  //TODO: Is there a bug, how about 2 users update a file, what's will happened for buffer;
+  //TODO: Is there a bug, how about 2 users update a file, what will happened for this buffer?
   var MAX_SIZE = 16 * 1024 * 1024,
       buffer = new Buffer(MAX_SIZE);
 
-  RequestParser = function(req, res, callback){
+  RequestParser = function(req, res, callback) {
     var length = 0, data = "";
 
     req.on('data', function(chunk) {
@@ -227,11 +230,11 @@ var RequestParser;
 var SessionParser;
 
 //TODO: Need a child process of clear session
-(function(){
+(function() {
 
   var fs = require("fs");
 
-  SessionParser = (function(req, res, callback){
+  SessionParser = (function(req, res, callback) {
 
     var sessionDir = Settings.sessionDir;
 
@@ -243,14 +246,14 @@ var SessionParser;
     };
 
     //TODO
-    self.set = function(key, val, callback){
+    self.set = function(key, val, callback) {
 
       var sessionfile = sessionDir  + self.sid;
 
       key && (self.obj[key] = val);
 
-      fs.writeFile( sessionfile, JSON.stringify(self.obj), function(err){
-        if(err){
+      fs.writeFile(sessionfile, JSON.stringify(self.obj), function(err) {
+        if (err) {
           console.log(err);
           return;
         }
@@ -260,11 +263,11 @@ var SessionParser;
     };
 
     //TO DO
-    self.get = function(key){
+    self.get = function(key) {
       return self.obj[key];
     };
 
-    self.init = function(){
+    self.init = function() {
       var sidKey = "_wsid",
           sidVal,
           cookie = req.headers.cookie || "";
@@ -276,7 +279,7 @@ var SessionParser;
       (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 38));
 
       //sid doesn't exist, create it;
-      if(idx < 0 || sidVal.length != 32){
+      if (idx < 0 || sidVal.length != 32) {
         sidVal = Math.uuid(32);
         res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
       };
@@ -287,7 +290,7 @@ var SessionParser;
 
       //here will be cause a bit of delay
       fs.exists(sessionfile, function (exists) {
-        if(exists){
+        if (exists) {
           fs.readFile( sessionfile, function (err, data) {
             if (err) {
               console.log(err);
@@ -318,15 +321,15 @@ var SessionParser;
 /*
 Parser: Functions that Filter and Handler will be called 
 */
-var Parser = function(req, res, mapper){
+var Parser = function(req, res, mapper) {
 
   var handler = mapper.handler;
 
   //add sesion support
-  var parseSession = function(){
+  var parseSession = function() {
     //add sesion support
-    if(mapper.session && typeof req.session == "undefined"){
-      SessionParser(req, res, function(session){
+    if (mapper.session && typeof req.session == "undefined") {
+      SessionParser(req, res, function(session) {
         req.session = session;
         handler(req, res);
       });
@@ -339,11 +342,11 @@ var Parser = function(req, res, mapper){
   parse data in request, this should be done before parse session,
   because session stored in file
   */
-  var parseRequest = function(){
+  var parseRequest = function() {
     //need to parse the request?
-    if(mapper.parse && typeof req.body == "undefined"){
+    if (mapper.parse && typeof req.body == "undefined") {
       //Must parser the request first, or the post data will lost;
-      RequestParser(req, res, function(data){
+      RequestParser(req, res, function(data) {
         req.body = data;
         parseSession();
       });
@@ -355,9 +358,9 @@ var Parser = function(req, res, mapper){
   /*
   parse file in request, this should be at the top of the list
   */
-  var parseFile = function(){
+  var parseFile = function() {
     //Need to parse the file in request?
-    if(mapper.file && typeof req.body == "undefined"){
+    if (mapper.file && typeof req.body == "undefined") {
       //Must parser the request first, or the post data maybe lost;
       var formidable = require('./lib/incoming_form'),
           form = new formidable.IncomingForm();
@@ -365,7 +368,7 @@ var Parser = function(req, res, mapper){
       form.uploadDir = Settings.uploadDir;
 
       form.parse(req, function(err, fields, files) {
-        if (err){
+        if (err) {
           console.log(err);
           return;
         };
@@ -393,7 +396,7 @@ Filters will be always called before a handler.
 */
 var Filter = {
   //filter list
-  filters : [],
+  filters: [],
   
   /*
   filter: add a new filter
@@ -401,9 +404,9 @@ var Filter = {
   handler:    function      [required]
   options:    object        [optional]
   */
-  filter : function(expression, handler, options){
+  filter: function(expression, handler, options) {
     //The first parameter is Function => (handler, options)
-    if(expression.constructor == Function){
+    if (expression.constructor == Function) {
       options = handler;
       handler = expression;
       expression = null;
@@ -417,7 +420,7 @@ var Filter = {
   file receiver: it's a specfic filter,
   this filter should be always at the top of the filter list
   */
-  file: function(expression, handler, options){
+  file: function(expression, handler, options) {
     var mapper = new Mapper(expression, handler, {file: true}); 
     //insert as the first elements
     Filter.filters.splice(0, 0, mapper);
@@ -427,31 +430,31 @@ var Filter = {
 /*
 Filter Chain
 */
-var FilterChain = function(cb){
+var FilterChain = function(cb) {
   var self = this;
   self.idx = 0;
   self.cb = cb;
 };
 
 FilterChain.prototype = {
-  next : function(req, res){
+  next: function(req, res) {
     var self = this;
 
     var mapper = Filter.filters[self.idx++];
 
     //filter is complete, execute callback;
-    if(!mapper) return self.cb && self.cb();
+    if (!mapper) return self.cb && self.cb();
 
     /*
     If not Matched go to next filter
     If matched need to execute the req.next() in callback handler,
     e.g:
-    webSvr.filter(/expression/, function(req, res){
+    webSvr.filter(/expression/, function(req, res) {
       //filter actions
       req.next(req, res);
     }, options);
     */
-    if(mapper.match(req)){
+    if (mapper.match(req)) {
 
       console.log("filter matched", self.idx, mapper.expression, req.url);
 
@@ -468,7 +471,7 @@ At the same time only one Handler will be called;
 */
 var Handler;
 
-(function(){
+(function() {
 
   /*
   Private: handler list
@@ -485,34 +488,34 @@ var Handler;
     handler:    [many types]  [required]
     options:    object        [optional]
     */
-    url : function(expression, handler, options){
+    url: function(expression, handler, options) {
       var mapper = new Mapper(expression, handler, options);
       handlers.push(mapper);
     },
 
     //Post: Parse the post data by default;
-    post : function(expression, handler, options){
+    post: function(expression, handler, options) {
       this.url(expression, handler, _.extend({ parse: true }, options));
     },
 
     //Session: Parse the session and post by default;
-    session : function(expression, handler){
+    session: function(expression, handler) {
       this.url(expression, handler, { parse: true, session: true });
     },
 
-    handle : function(req, res){
+    handle: function(req, res) {
       //flag: is matched?
-      for(var i = 0, len = handlers.length; i < len ; i++){
+      for(var i = 0, len = handlers.length; i < len ; i++) {
 
         var mapper = handlers[i];
-        if(mapper.match(req)){
+        if (mapper.match(req)) {
 
           console.log("handler matched", i, mapper.expression, req.url);
 
           var handler = mapper.handler,
               type = handler.constructor.name;
 
-          switch(type){
+          switch(type) {
             //function: treated it as custom function handler
             case "Function":
               Parser(req, res, mapper);
@@ -548,19 +551,19 @@ var Handler;
 /*
 ListDir: List all the files in a directory
 */
-var ListDir = (function(){
+var ListDir = (function() {
 
   var fs    = require("fs"),
       path  = require("path"); 
 
-  var urlFormat = function(url){
+  var urlFormat = function(url) {
     url = url.replace(/\\/g,'/');
     url = url.replace(/ /g,'%20');
     return url;
   };
 
   //Align to right
-  var date = function(date){
+  var date = function(date) {
     var d = date.getFullYear() 
       + '-' + (date.getMonth() + 1)
       + '-' + (date.getDay() + 1)
@@ -569,39 +572,39 @@ var ListDir = (function(){
   };
 
   //Align to left
-  var size = function(num){
+  var size = function(num) {
     return num + "                ".substring(0, 12 - String(num).length);
   };
 
   //Create an anchor
-  var anchor = function(txt, url){
+  var anchor = function(txt, url) {
     url = url ? url : "/";
     return '<a href="' + url + '">' + txt + "</a>";
   };
 
   var listDir = {
     //List all the files in a directory
-    list : function(req, res, dir){
+    list: function(req, res, dir) {
       var url = req.url,
           cur = 0,
           len = 0;
 
-      var listBegin = function(){
+      var listBegin = function() {
         res.writeHead(200, {"Content-Type": "text/html"});
         res.write("<h2>http://" + req.headers.host + url + "</h2><hr/>");
         res.write("<pre>");
         res.write(anchor("[To Parent Directory]", url.substr(0, url.lastIndexOf('/'))) + "\r\n\r\n");
       };
 
-      var listEnd = function(){
+      var listEnd = function() {
         res.write("</pre><hr/>");
         res.end("<h5>Count: " + len + "</h5>");
       };
 
       listBegin();
 
-      fs.readdir(dir, function(err, files){
-        if(err){
+      fs.readdir(dir, function(err, files) {
+        if (err) {
           listEnd();
           console.log(err);
           return;
@@ -609,16 +612,16 @@ var ListDir = (function(){
 
         len = files.length;
 
-        for(var idx = 0; idx < len; idx++){
+        for(var idx = 0; idx < len; idx++) {
           //Persistent the idx before make the sync process
-          (function(idx){
+          (function(idx) {
             var filePath = path.join(dir, files[idx]),
                 fileUrl = urlFormat(path.join(url, files[idx]));
 
-            fs.stat(filePath, function(err, stat){
+            fs.stat(filePath, function(err, stat) {
               cur++;
 
-              if(err){
+              if (err) {
                 console.log(err);
               }else{
                 res.write(
@@ -650,9 +653,9 @@ var ListDir = (function(){
 /*
 * WebSvr Namespace
 */
-var WebSvr = (function(){
+var WebSvr = (function() {
 
-  var server = function(options){
+  var server = function(options) {
     //Library
     var fs = require("fs"),
         path = require("path"),
@@ -664,7 +667,7 @@ var WebSvr = (function(){
         root,
         port;
 
-    var fileHandler = function(req, res){
+    var fileHandler = function(req, res) {
 
       var url = req.url,
           hasQuery = url.indexOf("?");
@@ -674,18 +677,18 @@ var WebSvr = (function(){
 
       var fullPath = path.join(root, url);
 
-      fs.stat(fullPath, function(err, stat){
+      fs.stat(fullPath, function(err, stat) {
 
         //Consider as file not found
-        if(err) return self.write404(res);
+        if (err) return self.write404(res);
 
         //Is file? Open this file and send to client.
-        if(stat.isFile()){
+        if (stat.isFile()) {
           writeFile(res, fullPath);
         }
 
         //Is Directory? List all the files and folders.
-        else if(stat.isDirectory()){
+        else if (stat.isDirectory()) {
           options.listDir
             ? ListDir.list(req, res, fullPath)
             : self.write403(res);
@@ -694,30 +697,30 @@ var WebSvr = (function(){
       });
     };
 
-    var requestHandler = function(req, res){
+    var requestHandler = function(req, res) {
       //Response may be shutdown when do the filter, in order not to cause exception,
       //Rewrite the write/writeHead functionalities of current response object
       var endFn = res.end;
-      res.end = function(){
+      res.end = function() {
         //Execute old end
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
-        res.write = res.writeHead = function(){
+        res.write = res.writeHead = function() {
           console.log("response is already end, response.write ignored!")
         };
       };
 
-      res.writeFile = function(filePath, cb){
+      res.writeFile = function(filePath, cb) {
         self.writeFile(res, filePath, cb);
       };
 
-      res.redirect = function(url, status){
+      res.redirect = function(url, status) {
         res.writeHead(status ? status : 302, { "Location": url });
         res.end();
       };
 
       //Define filter object
-      req.filter = new FilterChain(function(){
+      req.filter = new FilterChain(function() {
         //if handler not match, send the request
         !Handler.handle(req, res) && fileHandler(req, res);
       });
@@ -726,9 +729,9 @@ var WebSvr = (function(){
       req.filter.next(req, res);
     };
 
-    var writeFile = function(res, fullPath){
-      fs.readFile(fullPath, function(err, data){
-        if(err){
+    var writeFile = function(res, fullPath) {
+      fs.readFile(fullPath, function(err, data) {
+        if (err) {
           console.log(err);
           return;
         }
@@ -748,15 +751,15 @@ var WebSvr = (function(){
     self.session = Handler.session;
 
     //Get a fullpath of a request
-    self.getFullPath = function(filePath){
+    self.getFullPath = function(filePath) {
       return path.join(root, filePath);
     };
 
     //Write file, filePath is relative path
-    self.writeFile = function(res, filePath, cb){
+    self.writeFile = function(res, filePath, cb) {
       filePath = path.join(root, filePath);
-      fs.exists(filePath, function(exist){
-        if(exist){
+      fs.exists(filePath, function(exist) {
+        if (exist) {
           writeFile(res, filePath);
           cb && cb(exist);
         }else{
@@ -770,18 +773,18 @@ var WebSvr = (function(){
 
     //TODO: Support 304 client-side cache
 
-    self.write403 = function(res){
+    self.write403 = function(res) {
       res.writeHead(403, {"Content-Type": "text/html"});
       res.end("Access forbidden!");
     };
 
-    self.write404 = function(res){
+    self.write404 = function(res) {
       res.writeHead(404, {"Content-Type": "text/html"});
       res.end("File not found!");
     };
 
     //Public: start http server
-    self.start = function(){
+    self.start = function() {
       //Update the default value of Settings
       options = _.extend({}, Settings, options);
 
@@ -789,7 +792,7 @@ var WebSvr = (function(){
       port = parseInt(options.port);
 
       //Create http server
-      if(options.http){
+      if (options.http) {
         var httpSvr = require("http").createServer(requestHandler);
         httpSvr.listen(port);
 
@@ -802,7 +805,7 @@ var WebSvr = (function(){
       }
 
       //Create https server
-      if(options.https){
+      if (options.https) {
         var httpsOpts = options.httpsOpts,
             httpsPort = options.httpsPort;
 
@@ -816,10 +819,15 @@ var WebSvr = (function(){
 
         self.httpsSvr = httpsSvr;
       }
+
+      //diable console.log information
+      if (!options.debug) {
+        console.log = function(){};
+      }
     };
 
     //Public: close http server;
-    self.close = function(){
+    self.close = function() {
       self.httpSvr && self.httpSvr.close();
       self.httpsSvr && self.httpsSvr.close();
     };
@@ -837,7 +845,8 @@ var webSvr = new WebSvr({
   root: "../",
   listDir: true,
   https: true,
-  httpsPort: 8443
+  httpsPort: 8443,
+  debug: true
 });
 
 webSvr.start();
@@ -847,7 +856,7 @@ General filter: parse the post data / session before all request
   parse:   parse the post data and stored in req.body;
   session: init the session and stored in req.session; 
 */
-webSvr.filter(function(req, res){
+webSvr.filter(function(req, res) {
   //TODO: Add greeting words in filter
   //res.write("Hello WebSvr!<br/>");
 
@@ -858,9 +867,9 @@ webSvr.filter(function(req, res){
 /*
 Session Filter: protect test/* folder => (validation by session);
 */
-webSvr.filter(/test\/[\w\.]+/, function(req, res){
+webSvr.filter(/test\/[\w\.]+/, function(req, res) {
   //It's not index.htm/login.do, do the session validation
-  if(req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0){
+  if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
     !req.session.get("username") && res.end("You must login, first!");
   }
 
@@ -874,15 +883,15 @@ Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
 */
-webSvr.session("login.do", function(req, res){
+webSvr.session("login.do", function(req, res) {
   var querystring = require("querystring");
 
   //TODO: Add an parameter to auto-complete querystring.parse(req.body);
   var qs = querystring.parse(req.body);
-  if(qs.username == "admin" && qs.password == "12345678"){
+  if (qs.username == "admin" && qs.password == "12345678") {
     //Put key/value pair in session
     //TODO: Support put JSON object directly
-    req.session.set("username", qs.username, function(session){
+    req.session.set("username", qs.username, function(session) {
       //TODO: Add req.redirect / req.forward functionalities;
       res.writeHead(200, {"Content-Type": "text/html"});
       res.writeFile("/test/setting.htm");
@@ -896,7 +905,7 @@ webSvr.session("login.do", function(req, res){
 /*
 Uploader: upload.do => (receive handler)
 */
-webSvr.file("upload.do", function(req, res){
+webSvr.file("upload.do", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/plain"});
   //Upload file is stored in req.files
   //form fields is stored in req.body
@@ -907,7 +916,7 @@ webSvr.file("upload.do", function(req, res){
 /*
 Redirect: redirect request, try at: http://localhost:8054/redirect
 */
-webSvr.url("redirect", function(req, res){
+webSvr.url("redirect", function(req, res) {
   res.redirect("/svr/websvr.all.js");
 });
 
@@ -920,7 +929,7 @@ webSvr.url("combine", ["svr/tool/Combine.js"]);
 //Mapping "hello" to a string, trying at http://localhost:8054/hello
 webSvr.url("hello", "Hello WebSvr!");
 //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-webSvr.post("post.htm", function(req, res){
+webSvr.post("post.htm", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/html"});
   //Witch session support: "{session: true}"
   res.write("You username is " + req.session.get("username"));

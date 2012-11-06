@@ -37,6 +37,7 @@ Session based authentication (session stored in files), all the request under "t
       parse:   parse the post data and stored in req.body;
       session: init the session and stored in req.session; 
     */
+<<<<<<< HEAD
     webSvr.filter(function(req, res){
       //TODO: Add greeting words in filter
       //res.write("Hello WebSvr!<br/>");
@@ -49,8 +50,11 @@ Session based authentication (session stored in files), all the request under "t
     Session Filter: protect test/* folder => (validate by session);
     */
     webSvr.filter(/test\/[\w\.]+/, function(req, res){
+=======
+    webSvr.filter(/test\/[\w\.]+/, function(req, res) {
+>>>>>>> optimize
       //It's not index.htm/login.do, do the session validation
-      if(req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0){
+      if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
         !req.session.get("username") && res.end("You must login, first!");
       }
 
@@ -68,15 +72,19 @@ Handle Login and put the username in Session
       username: admin
       password: 12345678
     */
+<<<<<<< HEAD
     webSvr.session("login.do", function(req, res){
+=======
+    webSvr.session(/login.do/, function(req, res) {
+>>>>>>> optimize
       var querystring = require("querystring");
 
       //TODO: Add an parameter to auto-complete querystring.parse(req.body);
       var qs = querystring.parse(req.body);
-      if(qs.username == "admin" && qs.password == "12345678"){
+      if (qs.username == "admin" && qs.password == "12345678") {
         //Put key/value pair in session
         //TODO: Support put JSON object directly
-        req.session.set("username", qs.username, function(session){
+        req.session.set("username", qs.username, function(session) {
           //TODO: Add req.redirect / req.forward functionalities;
           res.writeHead(200, {"Content-Type": "text/html"});
           res.writeFile("/test/setting.htm");
@@ -94,7 +102,11 @@ Receive upload file (it's a specfic filter)
     /*
     Uploader: upload.do => (receive handler)
     */
+<<<<<<< HEAD
     webSvr.file("upload.do", function(req, res){
+=======
+    webSvr.file(/upload.do/, function(req, res) {
+>>>>>>> optimize
       res.writeHead(200, {"Content-Type": "text/plain"});
       //Upload file is stored in req.files
       //form fields is stored in req.body
@@ -103,7 +115,7 @@ Receive upload file (it's a specfic filter)
     });
 
 
-Simple API
+Other APIs
 --------------
 Redirect
 
@@ -124,7 +136,7 @@ Url Mapping
 Post Data
 
     //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-    webSvr.post(/post.htm/, function(req, res){
+    webSvr.post(/post.htm/, function(req, res) {
       res.writeHead(200, {"Content-Type": "text/html"});
       //Need session support
       res.write("You username is " + req.session.get("username"));

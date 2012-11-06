@@ -4,7 +4,7 @@ At the same time only one Handler will be called;
 */
 var Handler;
 
-(function(){
+(function() {
 
   /*
   Private: handler list
@@ -21,34 +21,34 @@ var Handler;
     handler:    [many types]  [required]
     options:    object        [optional]
     */
-    url : function(expression, handler, options){
+    url: function(expression, handler, options) {
       var mapper = new Mapper(expression, handler, options);
       handlers.push(mapper);
     },
 
     //Post: Parse the post data by default;
-    post : function(expression, handler, options){
+    post: function(expression, handler, options) {
       this.url(expression, handler, _.extend({ parse: true }, options));
     },
 
     //Session: Parse the session and post by default;
-    session : function(expression, handler){
+    session: function(expression, handler) {
       this.url(expression, handler, { parse: true, session: true });
     },
 
-    handle : function(req, res){
+    handle: function(req, res) {
       //flag: is matched?
-      for(var i = 0, len = handlers.length; i < len ; i++){
+      for(var i = 0, len = handlers.length; i < len ; i++) {
 
         var mapper = handlers[i];
-        if(mapper.match(req)){
+        if (mapper.match(req)) {
 
           console.log("handler matched", i, mapper.expression, req.url);
 
           var handler = mapper.handler,
               type = handler.constructor.name;
 
-          switch(type){
+          switch(type) {
             //function: treated it as custom function handler
             case "Function":
               Parser(req, res, mapper);

@@ -5,7 +5,8 @@ var webSvr = new WebSvr({
   root: "../",
   listDir: true,
   https: true,
-  httpsPort: 8443
+  httpsPort: 8443,
+  debug: true
 });
 
 webSvr.start();
@@ -15,7 +16,7 @@ General filter: parse the post data / session before all request
   parse:   parse the post data and stored in req.body;
   session: init the session and stored in req.session; 
 */
-webSvr.filter(function(req, res){
+webSvr.filter(function(req, res) {
   //TODO: Add greeting words in filter
   //res.write("Hello WebSvr!<br/>");
 
@@ -26,9 +27,9 @@ webSvr.filter(function(req, res){
 /*
 Session Filter: protect test/* folder => (validation by session);
 */
-webSvr.filter(/test\/[\w\.]+/, function(req, res){
+webSvr.filter(/test\/[\w\.]+/, function(req, res) {
   //It's not index.htm/login.do, do the session validation
-  if(req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0){
+  if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
     !req.session.get("username") && res.end("You must login, first!");
   }
 
@@ -42,15 +43,15 @@ Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
 */
-webSvr.session("login.do", function(req, res){
+webSvr.session("login.do", function(req, res) {
   var querystring = require("querystring");
 
   //TODO: Add an parameter to auto-complete querystring.parse(req.body);
   var qs = querystring.parse(req.body);
-  if(qs.username == "admin" && qs.password == "12345678"){
+  if (qs.username == "admin" && qs.password == "12345678") {
     //Put key/value pair in session
     //TODO: Support put JSON object directly
-    req.session.set("username", qs.username, function(session){
+    req.session.set("username", qs.username, function(session) {
       //TODO: Add req.redirect / req.forward functionalities;
       res.writeHead(200, {"Content-Type": "text/html"});
       res.writeFile("/test/setting.htm");
@@ -64,7 +65,7 @@ webSvr.session("login.do", function(req, res){
 /*
 Uploader: upload.do => (receive handler)
 */
-webSvr.file("upload.do", function(req, res){
+webSvr.file("upload.do", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/plain"});
   //Upload file is stored in req.files
   //form fields is stored in req.body
@@ -75,7 +76,7 @@ webSvr.file("upload.do", function(req, res){
 /*
 Redirect: redirect request, try at: http://localhost:8054/redirect
 */
-webSvr.url("redirect", function(req, res){
+webSvr.url("redirect", function(req, res) {
   res.redirect("/svr/websvr.all.js");
 });
 
@@ -88,7 +89,7 @@ webSvr.url("combine", ["svr/tool/Combine.js"]);
 //Mapping "hello" to a string, trying at http://localhost:8054/hello
 webSvr.url("hello", "Hello WebSvr!");
 //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-webSvr.post("post.htm", function(req, res){
+webSvr.post("post.htm", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/html"});
   //Witch session support: "{session: true}"
   res.write("You username is " + req.session.get("username"));

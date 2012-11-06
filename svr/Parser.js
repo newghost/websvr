@@ -1,15 +1,15 @@
 /*
 Parser: Functions that Filter and Handler will be called 
 */
-var Parser = function(req, res, mapper){
+var Parser = function(req, res, mapper) {
 
   var handler = mapper.handler;
 
   //add sesion support
-  var parseSession = function(){
+  var parseSession = function() {
     //add sesion support
-    if(mapper.session && typeof req.session == "undefined"){
-      SessionParser(req, res, function(session){
+    if (mapper.session && typeof req.session == "undefined") {
+      SessionParser(req, res, function(session) {
         req.session = session;
         handler(req, res);
       });
@@ -22,11 +22,11 @@ var Parser = function(req, res, mapper){
   parse data in request, this should be done before parse session,
   because session stored in file
   */
-  var parseRequest = function(){
+  var parseRequest = function() {
     //need to parse the request?
-    if(mapper.parse && typeof req.body == "undefined"){
+    if (mapper.parse && typeof req.body == "undefined") {
       //Must parser the request first, or the post data will lost;
-      RequestParser(req, res, function(data){
+      RequestParser(req, res, function(data) {
         req.body = data;
         parseSession();
       });
@@ -38,9 +38,9 @@ var Parser = function(req, res, mapper){
   /*
   parse file in request, this should be at the top of the list
   */
-  var parseFile = function(){
+  var parseFile = function() {
     //Need to parse the file in request?
-    if(mapper.file && typeof req.body == "undefined"){
+    if (mapper.file && typeof req.body == "undefined") {
       //Must parser the request first, or the post data maybe lost;
       var formidable = require('./lib/incoming_form'),
           form = new formidable.IncomingForm();
@@ -48,7 +48,7 @@ var Parser = function(req, res, mapper){
       form.uploadDir = Settings.uploadDir;
 
       form.parse(req, function(err, fields, files) {
-        if (err){
+        if (err) {
           console.log(err);
           return;
         };

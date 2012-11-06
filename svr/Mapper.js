@@ -5,7 +5,7 @@ handler: required parameter
 options: other optional parameters
 */
 
-var Mapper = function(expression, handler, options){
+var Mapper = function(expression, handler, options) {
   var self = this;
 
   self.expression = expression;
@@ -19,14 +19,14 @@ Mapper.prototype = {
   /*
   Does this mapper matched this request?
   */
-  match: function(req){
+  match: function(req) {
     var self = this,
         expression = self.expression;
 
     //No expression? It's a general filter mapper
-    if(!expression) return true;
+    if (!expression) return true;
 
-    switch(expression.constructor){
+    switch(expression.constructor) {
       case String: return req.url.indexOf(expression) > -1;
       case RegExp: return expression.test(req.url);
     }
@@ -41,8 +41,8 @@ Mapper.prototype = {
   file:     boolean
   parse:    boolean
   */ 
-  extend: function(options){
-    for(key in options){
+  extend: function(options) {
+    for(key in options) {
       this[key] = options[key]
     }
   }
