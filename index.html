@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Node-websvr by newghost</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Node-websvr</h1>
+        <p></p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/newghost/node-websvr" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/newghost/node-websvr/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/newghost/node-websvr/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <h1>WebSvr</h1>
+
+<p>Lincense: MIT, GPL</p>
+
+<h2>Description:</h2>
+
+<p>A simple web server based on node.js</p>
+
+<h2>Version: 0.024</h2>
+
+<ul>
+<li>Filter: A request will try to match all the filters first, and then pass to the Handler</li>
+<li>Handler: When a request matched a handler, it will returned, only one handler will be executed</li>
+<li>Session: Stored in file, with JSON format</li>
+<li>File: Support uploading files</li>
+</ul><h2>Start</h2>
+
+<p>Edit in SiteTest.js or Create a new Site.js and added to MakeFile.list</p>
+
+<pre><code>//Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
+//Trying at: http://localhost:8054
+var webSvr = new WebSvr({
+  root: "../",
+  listDir: true,
+  https: true,
+  httpsPort: 8443
+});
+
+webSvr.start();
+</code></pre>
+
+<h2>Filter</h2>
+
+<p>Session based authentication (session stored in files), all the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"</p>
+
+<pre><code>/*
+General filter: parse the post data / session before all request
+  parse:   parse the post data and stored in req.body;
+  session: init the session and stored in req.session; 
+*/
+webSvr.filter(function(req, res){
+  //TODO: Add greeting words in filter
+  //res.write("Hello WebSvr!&lt;br/&gt;");
+
+  //Link to next filter
+  req.filter.next(req, res);
+}, {parse:true, session:true});
+
+/*
+Session Filter: protect test/* folder =&gt; (validate by session);
+*/
+webSvr.filter(/test\/[\w\.]+/, function(req, res) {
+  //It's not index.htm/login.do, do the session validation
+  if (req.url.indexOf("index.htm") &lt; 0 &amp;&amp; req.url.indexOf("login.do") &lt; 0) {
+    !req.session.get("username") &amp;&amp; res.end("You must login, first!");
+  }
+
+  //Link to next filter
+  req.filter.next(req, res);
+});
+</code></pre>
+
+<h2>Handler</h2>
+
+<p>Handle Login and put the username in Session</p>
+
+<pre><code>/*
+Handler: login.do =&gt; (validate the username &amp; password)
+  username: admin
+  password: 12345678
+*/
+webSvr.session(/login.do/, function(req, res) {
+  var querystring = require("querystring");
+
+  //TODO: Add an parameter to auto-complete querystring.parse(req.body);
+  var qs = querystring.parse(req.body);
+  if (qs.username == "admin" &amp;&amp; qs.password == "12345678") {
+    //Put key/value pair in session
+    //TODO: Support put JSON object directly
+    req.session.set("username", qs.username, function(session) {
+      //TODO: Add req.redirect / req.forward functionalities;
+      res.writeHead(200, {"Content-Type": "text/html"});
+      res.writeFile("/test/setting.htm");
+    });
+  }else{
+    res.writeHead(401);
+    res.end("Wrong username/password");
+  }
+});
+</code></pre>
+
+<h2>File</h2>
+
+<p>Receive upload file (it's a specfic filter)</p>
+
+<pre><code>/*
+Uploader: upload.do =&gt; (receive handler)
+*/
+webSvr.file(/upload.do/, function(req, res) {
+  res.writeHead(200, {"Content-Type": "text/plain"});
+  //Upload file is stored in req.files
+  //form fields is stored in req.body
+  res.write(JSON.stringify(req.body));
+  res.end(JSON.stringify(req.files));
+});
+</code></pre>
+
+<h2>Other APIs</h2>
+
+<p>Redirect</p>
+
+<pre><code>/*
+Redirect: redirect request, try at: http://localhost:8054/redirect
+*/
+webSvr.url("redirect", function(req, res){
+  res.redirect("/svr/websvr.all.js");
+});
+</code></pre>
+
+<p>Url Mapping</p>
+
+<pre><code>//Mapping "combine" to tool/Combine.js, trying at: http://localhost:8054/combine
+webSvr.url(/combine/, ["svr/tool/Combine.js"]);
+//Mapping "hello" to a string, trying at http://localhost:8054/hello
+webSvr.url(/hello/, "Hello WebSvr!");
+</code></pre>
+
+<p>Post Data</p>
+
+<pre><code>//Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
+webSvr.post(/post.htm/, function(req, res) {
+  res.writeHead(200, {"Content-Type": "text/html"});
+  //Need session support
+  res.write("You username is " + req.session.get("username"));
+  res.write('&lt;form action="" method="post"&gt;&lt;input name="input" /&gt;&lt;/form&gt;&lt;br/&gt;');
+  res.end('Received : ' + req.body);
+}, {session: true});
+</code></pre>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/newghost">newghost</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
