@@ -1,11 +1,13 @@
 /*
-* Description: Create a Web Server (http based).
+* Description: Create a Web Server
 * Author: Kris Zhang
+* Licenses: MIT, GPL
 */
 /*
-* WebSvr Namespace
+* Define WebSvr
+* Export WebSvr
 */
-var WebSvr = (function() {
+var WebSvr = module.exports = (function() {
 
   var server = function(options) {
     //Library
@@ -24,7 +26,7 @@ var WebSvr = (function() {
       var url = req.url,
           hasQuery = url.indexOf("?");
 
-      //Bug: path.join can't recognize the querystring;
+      //fs.stat can't recognize the file name with querystring;
       url = hasQuery > 0 ? url.substring(0, hasQuery) : url;
 
       var fullPath = path.join(root, url);
@@ -138,7 +140,7 @@ var WebSvr = (function() {
     //Public: start http server
     self.start = function() {
       //Update the default value of Settings
-      options = _.extend({}, Settings, options);
+      options = _.extend(Settings, options);
 
       root = options.root;
       port = parseInt(options.port);
