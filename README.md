@@ -1,12 +1,10 @@
 WebSvr
 ==============
-Lincense: MIT, GPL
-
-Description:
---------------
 A simple web server based on node.js
+Lincenses: MIT, GPL
+Version: 0.0.36
 
-Version: 0.024
+Features
 --------------
 - Filter: A request will try to match all the filters first, and then pass to the Handler
 - Handler: When a request matched a handler, it will returned, only one handler will be executed

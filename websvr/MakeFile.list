@@ -17,4 +17,5 @@ Parser.js
 Filter.js
 Handler.js
 ListDir.js
+Template.js
 Server.js

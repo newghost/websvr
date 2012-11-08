@@ -2,6 +2,7 @@
 var SessionParser;
 
 //TODO: Need a child process of clear session
+//TODO: Create session file when put sth. in
 (function() {
 
   var fs = require("fs");
@@ -17,7 +18,6 @@ var SessionParser;
       obj : {}
     };
 
-    //TODO
     self.set = function(key, val, callback) {
 
       var sessionfile = sessionDir  + self.sid;
@@ -34,7 +34,7 @@ var SessionParser;
       });
     };
 
-    //TO DO
+    //TODO support async mode, add one parameter of callback
     self.get = function(key) {
       return self.obj[key];
     };

@@ -98,6 +98,16 @@ webSvr.url("redirect", function(req, res) {
   res.redirect("/svr/websvr.all.js");
 });
 
+/*
+Template: render template with 
+*/
+webSvr.url("template.node", function(req, res) {
+  webSvr.render([req.url], { username: req.session.get("username") }, function(html){
+    res.writeHead(200, {"Content-Type": "text/html"});
+    res.end(html);
+  });
+});
+
 
 /*
 Simple redirect API:
@@ -109,7 +119,7 @@ webSvr.url("hello", "Hello WebSvr!");
 //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
 webSvr.post("post.htm", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/html"});
-  //Witch session support: "{session: true}"
+  //With session support: "{session: true}"
   res.write("You username is " + req.session.get("username"));
   res.write('<form action="" method="post"><input name="input" /></form><br/>');
   res.end('Received : ' + req.body);

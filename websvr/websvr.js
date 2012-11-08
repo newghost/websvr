@@ -1,13 +1,19 @@
 /*Global.js*/
 /*
 * Description: WebSvr
-* Lincense: MIT, GPL
 * Author: Kris Zhang
+* Lincense: MIT, GPL
+* Included Projects:
+- Formidable: Support uploading files, integrate
+  https://github.com/felixge/node-formidable/
 - Formidable: Support uploading files, integrate
   https://github.com/felixge/node-formidable/
 - Underscore: Add underscore a utility-belt library for JavaScript
   https://github.com/documentcloud/underscore
-- MIME: Suppor mime header, integrate https://github.com/broofa/node-mime
+- MIME: content-type in header
+  https://github.com/broofa/node-mime
+- template: Template Engine
+  https://github.com/olado/doT
 */
 
 //Underscore global object;
@@ -227,6 +233,7 @@ var RequestParser;
 var SessionParser;
 
 //TODO: Need a child process of clear session
+//TODO: Create session file when put sth. in
 (function() {
 
   var fs = require("fs");
@@ -242,7 +249,6 @@ var SessionParser;
       obj : {}
     };
 
-    //TODO
     self.set = function(key, val, callback) {
 
       var sessionfile = sessionDir  + self.sid;
@@ -259,7 +265,7 @@ var SessionParser;
       });
     };
 
-    //TO DO
+    //TODO support async mode, add one parameter of callback
     self.get = function(key) {
       return self.obj[key];
     };
@@ -642,6 +648,57 @@ var ListDir = (function() {
   return listDir;
 
 }());
+/*Template.js*/
+/*
+* Templates
+*/
+var Template = (function() {
+
+  var engine  = require("./lib/doT"),
+      fs      = require("fs"),
+      path    = require("path");
+
+  //render a file
+  var renderFile = function(filename, cb){
+    var fullpath = path.join(Settings.root, filename);
+
+    fs.readFile(fullpath, function (err, html) {
+      err && console.log(err);
+      err ? cb("") : cb(html);
+    });
+  };
+
+  return {
+    //render templates
+    render: function(chrunk, params, cb) {
+      var tmplFn = function(){};
+
+      //Not defined? passing an empty function
+      cb = cb || function(){};
+
+      try {
+        switch (chrunk.constructor) {
+          //It's html files
+          case String:
+            tmplFn = engine.compile(chrunk, params);
+            cb(tmplFn(params));
+            break;
+
+          //It's a file
+          case Array:
+            renderFile(chrunk[0], function(html) {
+              tmplFn = engine.compile(html, params);
+              cb(tmplFn(params));
+            });
+            break;
+        }
+      } catch (e) {
+        cb(e);
+      }
+    }
+  }
+
+}());
 /*Server.js*/
 /*
 * Description: Create a Web Server
@@ -748,6 +805,9 @@ var WebSvr = module.exports = (function() {
     self.url = Handler.url;
     self.post = Handler.post;
     self.session = Handler.session;
+
+    //Template
+    self.render = Template.render;
 
     //Get a fullpath of a request
     self.getFullPath = function(filePath) {

@@ -1,12 +1,18 @@
 /*
 * Description: WebSvr
-* Lincense: MIT, GPL
 * Author: Kris Zhang
+* Lincense: MIT, GPL
+* Included Projects:
+- Formidable: Support uploading files, integrate
+  https://github.com/felixge/node-formidable/
 - Formidable: Support uploading files, integrate
   https://github.com/felixge/node-formidable/
 - Underscore: Add underscore a utility-belt library for JavaScript
   https://github.com/documentcloud/underscore
-- MIME: Suppor mime header, integrate https://github.com/broofa/node-mime
+- MIME: content-type in header
+  https://github.com/broofa/node-mime
+- template: Template Engine
+  https://github.com/olado/doT
 */
 
 //Underscore global object;
