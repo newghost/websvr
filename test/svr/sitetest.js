@@ -42,7 +42,7 @@ webSvr.filter(function(req, res) {
 }, {parse:true, session:true});
 
 /*
-Session Filter: protect test/* folder => (validation by session);
+Session Filter: protect web/* folder => (validation by session);
 */
 webSvr.filter(/web\/[\w\.]+/, function(req, res) {
   //It's not index.htm/login.do, do the session validation
@@ -69,9 +69,10 @@ webSvr.session("login.do", function(req, res) {
     //Put key/value pair in session
     //TODO: Support put JSON object directly
     req.session.set("username", qs.username, function(session) {
-      //TODO: Add req.redirect / req.forward functionalities;
-      res.writeHead(200, {"Content-Type": "text/html"});
-      res.writeFile("/test/setting.htm");
+      //res.writeHead(200, {"Content-Type": "text/html"});
+      //res.writeFile("/web/setting.htm");
+      //TODO: Error handler of undefined methods
+      res.redirect("/web/setting.htm");
     });
   }else{
     res.writeHead(401);
