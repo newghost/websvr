@@ -38,7 +38,7 @@ webSvr.filter(function(req, res) {
   //res.write("Hello WebSvr!<br/>");
 
   //Link to next filter
-  req.filter.next(req, res);
+  req.filter.next();
 }, {parse:true, session:true});
 
 /*
@@ -51,7 +51,7 @@ webSvr.filter(/web\/[\w\.]+/, function(req, res) {
   }
 
   //Link to next filter
-  req.filter.next(req, res);
+  req.filter.next();
 });
 
 
@@ -106,6 +106,11 @@ webSvr.url("template.node", function(req, res) {
     res.writeHead(200, {"Content-Type": "text/html"});
     res.end(html);
   });
+});
+
+
+webSvr.url("testres", function(req, res) {
+  res.test();
 });
 
 

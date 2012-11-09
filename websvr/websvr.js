@@ -425,7 +425,7 @@ var Filter = {
   */
   file: function(expression, handler, options) {
     var mapper = new Mapper(expression, handler, {file: true}); 
-    //insert as the first elements
+    //insert at the top of the filter array
     Filter.filters.splice(0, 0, mapper);
   }
 };
@@ -433,15 +433,21 @@ var Filter = {
 /*
 Filter Chain
 */
-var FilterChain = function(cb) {
+var FilterChain = function(cb, req, res) {
   var self = this;
+
   self.idx = 0;
   self.cb = cb;
+
+  self.req = req;
+  self.res = res;
 };
 
 FilterChain.prototype = {
-  next: function(req, res) {
-    var self = this;
+  next: function() {
+    var self = this,
+        req  = self.req,
+        res  = self.res;
 
     var mapper = Filter.filters[self.idx++];
 
@@ -458,12 +464,13 @@ FilterChain.prototype = {
     }, options);
     */
     if (mapper.match(req)) {
-
       console.log("filter matched", self.idx, mapper.expression, req.url);
 
+      //filter matched, parse the request and then execute it
       Parser(req, res, mapper);
     }else{
-      self.next(req, res);
+      //filter not matched, validate next filter
+      self.next();
     }
   }
 };
@@ -775,14 +782,18 @@ var WebSvr = module.exports = (function() {
         res.end();
       };
 
-      //Define filter object
-      req.filter = new FilterChain(function() {
+      var filterChain = new FilterChain(function(){
+
         //if handler not match, send the request
         !Handler.handle(req, res) && fileHandler(req, res);
-      });
+
+      }, req, res);
+
+      //Hook FilterChain object on the request
+      req.filter = filterChain;
 
       //Handle the first filter
-      req.filter.next(req, res);
+      req.filter.next();
     };
 
     var writeFile = function(res, fullPath) {

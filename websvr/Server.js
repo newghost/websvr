@@ -73,14 +73,18 @@ var WebSvr = module.exports = (function() {
         res.end();
       };
 
-      //Define filter object
-      req.filter = new FilterChain(function() {
+      var filterChain = new FilterChain(function(){
+
         //if handler not match, send the request
         !Handler.handle(req, res) && fileHandler(req, res);
-      });
+
+      }, req, res);
+
+      //Hook FilterChain object on the request
+      req.filter = filterChain;
 
       //Handle the first filter
-      req.filter.next(req, res);
+      req.filter.next();
     };
 
     var writeFile = function(res, fullPath) {
