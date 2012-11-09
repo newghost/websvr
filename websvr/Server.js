@@ -73,6 +73,10 @@ var WebSvr = module.exports = (function() {
         res.end();
       };
 
+      //render template objects
+      res.render = Template.render;
+
+      //initial httprequest
       var filterChain = new FilterChain(function(){
 
         //if handler not match, send the request
@@ -108,8 +112,8 @@ var WebSvr = module.exports = (function() {
     self.post = Handler.post;
     self.session = Handler.session;
 
-    //Template
-    self.render = Template.render;
+    //Logger
+    self.log = Logger.log;
 
     //Get a fullpath of a request
     self.getFullPath = function(filePath) {

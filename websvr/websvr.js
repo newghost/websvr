@@ -50,12 +50,53 @@ var Settings = {
   httpsPort: 8443,
   httpsOpts: { key:"", cert:"" },
 
+  //logger file path
+  logger:     "./tmp/log.txt",
+
   //session file stored here, must be end with "/"
-  sessionDir: "../tmp/session/",
+  sessionDir: "./tmp/session/",
+
   //tempary upload file stored here, must be end with "/"
-  uploadDir:  "../tmp/upload/"
+  uploadDir:  "./tmp/upload/"
 };
 
+/*Logger.js*/
+/*
+Logger: log sth
+*/
+var Logger = (function(){
+
+  var fs = require("fs"),
+      path = require("path");
+
+  var lineSeparator = "\r\n",
+      indentSeparator = "\t",
+      depth = 9;
+
+  var log = function(logObj){
+
+    var output = new Date() + lineSeparator;
+
+    function print(pre, obj){
+      if(!obj) return;
+      for(var key in obj){
+        output = output + pre + key + " : " + obj[key] + lineSeparator;
+        if(typeof obj[key] == "object"){
+          (pre.length < depth) && print(pre + indentSeparator, obj[key]);
+        }
+      }
+    }
+
+    print(indentSeparator, logObj);
+
+    fs.appendFile(Settings.logger, output, function(err){
+      console.log(err);
+    });
+  };
+
+  return { log: log };
+
+})();
 /*ref\Math.uuid.js*/
 /*!
 Math.uuid.js (v1.4)
@@ -377,7 +418,7 @@ var Parser = function(req, res, mapper) {
         };
 
         //attach the parameters and files
-        req.body = fields;
+        req.body  = fields;
         req.files = files;
 
         //in fact request will not be parsed again, because body is not undefined
@@ -665,8 +706,8 @@ var Template = (function() {
       fs      = require("fs"),
       path    = require("path");
 
-  //render a file
-  var renderFile = function(filename, cb){
+  //get a file
+  var getFile = function(filename, cb){
     var fullpath = path.join(Settings.root, filename);
 
     fs.readFile(fullpath, function (err, html) {
@@ -675,33 +716,47 @@ var Template = (function() {
     });
   };
 
+  //render a file
+  var render = function(chrunk, params, outFn){
+    try {
+      tmplFn = engine.compile(chrunk, params);
+      outFn(tmplFn(params));
+    } catch(err) {
+      console.log(err);
+      outFn(err);
+    }
+  };
+
   return {
     //render templates
-    render: function(chrunk, params, cb) {
-      var tmplFn = function(){};
+    render: function(chrunk, params) {
+      var res = this,
+          end = res.end;
 
-      //Not defined? passing an empty function
-      cb = cb || function(){};
+      var url = chrunk.url,
+          con = chrunk.constructor;
 
-      try {
-        switch (chrunk.constructor) {
-          //It's html files
-          case String:
-            tmplFn = engine.compile(chrunk, params);
-            cb(tmplFn(params));
-            break;
+      //It's a http request (it has "url")
+      if (url) { 
+        getFile(url, function(tmpl) {
+          render(tmpl, params, end);
+        });
+      
+      //It's html contents (template codes)
+      } else if (con == String) {
+        render(chrunk, params, end);
 
-          //It's a file
-          case Array:
-            renderFile(chrunk[0], function(html) {
-              tmplFn = engine.compile(html, params);
-              cb(tmplFn(params));
-            });
-            break;
-        }
-      } catch (e) {
-        cb(e);
+      //It's Array object (template file path)
+      } else if (con == Array) {
+        getFile(chrunk[0], function(tmpl) {
+          render(tmpl, params, end);
+        });
+
+      //Nothing matched end the response
+      } else {
+        end();
       }
+
     }
   }
 
@@ -782,6 +837,10 @@ var WebSvr = module.exports = (function() {
         res.end();
       };
 
+      //render template objects
+      res.render = Template.render;
+
+      //initial httprequest
       var filterChain = new FilterChain(function(){
 
         //if handler not match, send the request
@@ -817,8 +876,8 @@ var WebSvr = module.exports = (function() {
     self.post = Handler.post;
     self.session = Handler.session;
 
-    //Template
-    self.render = Template.render;
+    //Logger
+    self.log = Logger.log;
 
     //Get a fullpath of a request
     self.getFullPath = function(filePath) {

@@ -24,8 +24,12 @@ var Settings = {
   httpsPort: 8443,
   httpsOpts: { key:"", cert:"" },
 
+  //logger file path
+  logger:     "./tmp/log.txt",
+
   //session file stored here, must be end with "/"
-  sessionDir: "../tmp/session/",
+  sessionDir: "./tmp/session/",
+
   //tempary upload file stored here, must be end with "/"
-  uploadDir:  "../tmp/upload/"
+  uploadDir:  "./tmp/upload/"
 };

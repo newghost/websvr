@@ -54,7 +54,7 @@ var Parser = function(req, res, mapper) {
         };
 
         //attach the parameters and files
-        req.body = fields;
+        req.body  = fields;
         req.files = files;
 
         //in fact request will not be parsed again, because body is not undefined

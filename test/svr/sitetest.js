@@ -102,17 +102,10 @@ webSvr.url("redirect", function(req, res) {
 Template: render template with 
 */
 webSvr.url("template.node", function(req, res) {
-  webSvr.render([req.url], { username: req.session.get("username") }, function(html){
-    res.writeHead(200, {"Content-Type": "text/html"});
-    res.end(html);
-  });
+  res.writeHead(200, {"Content-Type": "text/html"});
+  //render request with session username;
+  res.render(req, {username: req.session.get("username")});
 });
-
-
-webSvr.url("testres", function(req, res) {
-  res.test();
-});
-
 
 /*
 Simple redirect API:

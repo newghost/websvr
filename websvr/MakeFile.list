@@ -5,6 +5,7 @@
 #Global object and description
 Global.js
 Settings.js
+Logger.js
 
 #Reference: JavaScript library
 ref/Math.uuid.js
