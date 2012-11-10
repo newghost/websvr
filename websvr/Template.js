@@ -3,9 +3,7 @@
 */
 var Template = (function() {
 
-  var engine  = require("./lib/doT"),
-      fs      = require("fs"),
-      path    = require("path");
+  var engine  = require("./lib/doT");
 
   //get a file
   var getFile = function(filename, cb){

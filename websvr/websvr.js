@@ -16,13 +16,14 @@
   https://github.com/olado/doT
 */
 
-//Underscore global object;
-var _ = require("./lib/underscore");
+//Node library
+var fs      = require("fs");
+var path    = require("path");
+var qs      = require("querystring");
 
-//TODO: Should add global reference here? i.e.
-/*
-var fs = require("fs");
-*/
+//Open source library
+var _       = require("./lib/underscore");
+var mime    = require("./lib/mime")
 /*Settings.js*/
 /*
 Configurations
@@ -65,9 +66,6 @@ var Settings = {
 Logger: log sth
 */
 var Logger = (function(){
-
-  var fs = require("fs"),
-      path = require("path");
 
   var lineSeparator = "\r\n",
       indentSeparator = "\t",
@@ -276,8 +274,6 @@ var SessionParser;
 //TODO: Need a child process of clear session
 //TODO: Create session file when put sth. in
 (function() {
-
-  var fs = require("fs");
 
   SessionParser = (function(req, res, callback) {
 
@@ -604,9 +600,6 @@ ListDir: List all the files in a directory
 */
 var ListDir = (function() {
 
-  var fs    = require("fs"),
-      path  = require("path"); 
-
   var urlFormat = function(url) {
     url = url.replace(/\\/g,'/');
     url = url.replace(/ /g,'%20');
@@ -702,9 +695,7 @@ var ListDir = (function() {
 */
 var Template = (function() {
 
-  var engine  = require("./lib/doT"),
-      fs      = require("fs"),
-      path    = require("path");
+  var engine  = require("./lib/doT");
 
   //get a file
   var getFile = function(filename, cb){
@@ -774,10 +765,6 @@ var Template = (function() {
 var WebSvr = module.exports = (function() {
 
   var server = function(options) {
-    //Library
-    var fs = require("fs"),
-        path = require("path"),
-        mime = require("./lib/mime");
 
     //Parameters
     //Count: How many files?

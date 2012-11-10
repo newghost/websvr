@@ -5,8 +5,6 @@ var SessionParser;
 //TODO: Create session file when put sth. in
 (function() {
 
-  var fs = require("fs");
-
   SessionParser = (function(req, res, callback) {
 
     var sessionDir = Settings.sessionDir;

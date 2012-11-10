@@ -3,9 +3,6 @@ Logger: log sth
 */
 var Logger = (function(){
 
-  var fs = require("fs"),
-      path = require("path");
-
   var lineSeparator = "\r\n",
       indentSeparator = "\t",
       depth = 9;

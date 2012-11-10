@@ -10,10 +10,6 @@
 var WebSvr = module.exports = (function() {
 
   var server = function(options) {
-    //Library
-    var fs = require("fs"),
-        path = require("path"),
-        mime = require("./lib/mime");
 
     //Parameters
     //Count: How many files?

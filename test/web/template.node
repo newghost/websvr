@@ -6,7 +6,7 @@
   <title>Login</title>
 </head>
 <body>
-  Hello: {{=lt.username}}
+  Hello: {{=it.username}}
   <fieldset>
     <form action="upload.do" method="post" enctype="multipart/form-data">
       <input type="file" name="filename" class="fileUpload" multiple />

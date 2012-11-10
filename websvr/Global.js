@@ -15,10 +15,11 @@
   https://github.com/olado/doT
 */
 
-//Underscore global object;
-var _ = require("./lib/underscore");
+//Node library
+var fs      = require("fs");
+var path    = require("path");
+var qs      = require("querystring");
 
-//TODO: Should add global reference here? i.e.
-/*
-var fs = require("fs");
-*/
+//Open source library
+var _       = require("./lib/underscore");
+var mime    = require("./lib/mime")

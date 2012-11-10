@@ -3,9 +3,6 @@ ListDir: List all the files in a directory
 */
 var ListDir = (function() {
 
-  var fs    = require("fs"),
-      path  = require("path"); 
-
   var urlFormat = function(url) {
     url = url.replace(/\\/g,'/');
     url = url.replace(/ /g,'%20');
