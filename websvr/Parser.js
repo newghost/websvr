@@ -9,13 +9,9 @@ var Parser = function(req, res, mapper) {
   var parseSession = function() {
     //add sesion support
     if (mapper.session && typeof req.session == "undefined") {
-      SessionParser(req, res, function(session) {
-        req.session = session;
-        handler(req, res);
-      });
-    }else{
-      handler(req, res);
+      req.session = new SessionParser(req, res);
     }
+    handler(req, res);
   };
 
   /*

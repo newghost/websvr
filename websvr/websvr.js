@@ -268,70 +268,111 @@ var RequestParser;
 
 }());
 /*SessionParser.js*/
-
+  
 var SessionParser;
 
 //TODO: Need a child process of clear session
-//TODO: Create session file when put sth. in
 (function() {
 
-  SessionParser = (function(req, res, callback) {
+  SessionParser = function(req, res){
+    var self = this;
 
-    var sessionDir = Settings.sessionDir;
+    //session id
+    self.sid = null;
+    //session stored object
+    self.obj = null;
+    //this is new session?
+    self.new = false;
 
-    var self = {
-      //session id
-      sid : null,
-      //session stored object
-      obj : {}
-    };
+    //sessoin file path
+    self.path = null;
 
-    self.set = function(key, val, callback) {
+    //init session object
+    self.init(req, res);
+  };
 
-      var sessionfile = sessionDir  + self.sid;
+  SessionParser.prototype = {
+    init: function(req, res) {
+      var self   = this,
+          sidKey = "_wsid",
+          sidVal;
 
-      key && (self.obj[key] = val);
-
-      fs.writeFile(sessionfile, JSON.stringify(self.obj), function(err) {
-        if (err) {
-          console.log(err);
-          return;
-        }
-
-        callback && callback(self);
-      });
-    };
-
-    //TODO support async mode, add one parameter of callback
-    self.get = function(key) {
-      return self.obj[key];
-    };
-
-    self.init = function() {
-      var sidKey = "_wsid",
-          sidVal,
-          cookie = req.headers.cookie || "";
-
-      //Get or Create sid
-      var idx = cookie.indexOf(sidKey + "=");
-
-      //sid exist in the cookie, read it
+      //Get or Create sid, sid exist in the cookie, read it
+      var cookie = req.headers.cookie || "";
+      var idx = cookie.indexOf(sidKey + "=");      
       (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 38));
 
-      //sid doesn't exist, create it;
+      //Sid doesn't exist, create it
       if (idx < 0 || sidVal.length != 32) {
         sidVal = Math.uuid(32);
         res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
+        self.new  = true;
       };
       self.sid = sidVal;
 
-      //We only receive the cookie from Http headers
-      var sessionfile = sessionDir + self.sid;
+      //Update sessionfile path
+      self.path = path.join(Settings.sessionDir, self.sid);
+    }
 
-      //here will be cause a bit of delay
-      fs.exists(sessionfile, function (exists) {
+    //Create new session object
+    , newObj: function(key, cb){
+      //Key is offered, return null of this key, else return empty session object
+      var val = key ? null : {};
+
+      this.obj = {};
+      cb && cb(val);
+      return val;
+    }
+
+    //Get value from session object
+    , getVal: function(key, cb){
+      //key is null, return all the session object
+      var val = key ? this.obj[key] : this.obj;
+      cb && cb(val);
+      return val;
+    }
+
+    //Set an key/value pair in session object
+    , set: function(key, val, cb) {
+      var self = this;
+
+      //Get session object first
+      self.get(function() {
+
+        //Add or update key/value in session object
+        self.obj[key] = val;
+
+        fs.writeFile(self.path, JSON.stringify(self.obj), function(err) {
+          if (err) {
+            console.log(err);
+            return;
+          }
+
+          cb && cb(self.obj);
+        });
+      });
+    }
+
+    //Get value from session file, callbak only need to be appllied once;
+    , get: function(key, cb) {
+      var self = this;
+
+      //The first parameter is callback function
+      if (key.constructor == Function) {
+        cb  = key;
+        key = null;
+      }
+
+      //The session object is already loaded
+      if (self.obj) return self.getVal(key, cb);
+
+      //It's a new session file, need not to load it from file
+      if (self.new) return self.newObj(key, cb);
+
+      //File operates, a bit of delay
+      fs.exists(self.path, function(exists) {
         if (exists) {
-          fs.readFile( sessionfile, function (err, data) {
+          fs.readFile(self.path, function(err, data) {
             if (err) {
               console.log(err);
               return;
@@ -339,22 +380,15 @@ var SessionParser;
             data = data || "{}";
             self.obj = JSON.parse(data);
 
-            callback(self);
+            return self.getVal(key, cb);
           });
-        }else{
-          //session not exist create one
-          self.obj = {};
-          self.set(null , null , callback);
+        } else {
+          return self.newObj(key, cb);
         }
       });
+    }
 
-    };
-
-    self.init();
-
-    return self;
-
-  });
+  };
 
 }());
 /*Parser.js*/
@@ -369,13 +403,9 @@ var Parser = function(req, res, mapper) {
   var parseSession = function() {
     //add sesion support
     if (mapper.session && typeof req.session == "undefined") {
-      SessionParser(req, res, function(session) {
-        req.session = session;
-        handler(req, res);
-      });
-    }else{
-      handler(req, res);
+      req.session = new SessionParser(req, res);
     }
+    handler(req, res);
   };
 
   /*
