@@ -15,13 +15,29 @@ Start
 --------------
 Edit in SiteTest.js or Create a new Site.js and added to MakeFile.list
 
-    //Start the WebSVr, runnting at parent folder, default port is 8054, directory browser enabled;
+    //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
     //Trying at: http://localhost:8054
     var webSvr = new WebSvr({
-      root: "../",
-      listDir: true,
+      root: "./",
+
+      //enable https
       https: true,
-      httpsPort: 8443
+      //default port of https
+      httpsPort: 8443,
+      httpsOpts: {
+        key:  require("fs").readFileSync("svr/cert/privatekey.pem"),
+        cert: require("fs").readFileSync("svr/cert/certificate.pem")
+      },
+
+      //Change the default locations of tmp session and upload files
+      //session file stored here, must be end with "/"
+      sessionDir: "tmp/session/",
+      //tempary upload file stored here, must be end with "/"
+      uploadDir:  "tmp/upload/",
+
+
+      listDir: true,
+      debug: true
     });
 
     webSvr.start();
@@ -35,25 +51,29 @@ Session based authentication (session stored in files), all the request under "t
       parse:   parse the post data and stored in req.body;
       session: init the session and stored in req.session; 
     */
-    webSvr.filter(function(req, res){
+    webSvr.filter(function(req, res) {
       //TODO: Add greeting words in filter
       //res.write("Hello WebSvr!<br/>");
 
       //Link to next filter
-      req.filter.next(req, res);
+      req.filter.next();
     }, {parse:true, session:true});
 
     /*
-    Session Filter: protect test/* folder => (validate by session);
+    Session Filter: protect web/* folder => (validation by session);
     */
-    webSvr.filter(/test\/[\w\.]+/, function(req, res) {
+    webSvr.filter(/web\/[\w\.]+/, function(req, res) {
       //It's not index.htm/login.do, do the session validation
       if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
-        !req.session.get("username") && res.end("You must login, first!");
+        req.session.get("username", function(val){
+          console.log("session", val);
+
+          !val && res.end("You must login, first!");
+        });
       }
 
       //Link to next filter
-      req.filter.next(req, res);
+      req.filter.next();
     });
 
 
@@ -66,7 +86,7 @@ Handle Login and put the username in Session
       username: admin
       password: 12345678
     */
-    webSvr.session(/login.do/, function(req, res) {
+    webSvr.session("login.do", function(req, res) {
       var querystring = require("querystring");
 
       //TODO: Add an parameter to auto-complete querystring.parse(req.body);
@@ -75,9 +95,11 @@ Handle Login and put the username in Session
         //Put key/value pair in session
         //TODO: Support put JSON object directly
         req.session.set("username", qs.username, function(session) {
-          //TODO: Add req.redirect / req.forward functionalities;
-          res.writeHead(200, {"Content-Type": "text/html"});
-          res.writeFile("/test/setting.htm");
+          //res.writeHead(200, {"Content-Type": "text/html"});
+          //res.writeFile("/web/setting.htm");
+          //TODO: Error handler of undefined methods
+          console.log(session);
+          res.redirect("/web/setting.htm");
         });
       }else{
         res.writeHead(401);
@@ -92,7 +114,7 @@ Receive upload file (it's a specfic filter)
     /*
     Uploader: upload.do => (receive handler)
     */
-    webSvr.file(/upload.do/, function(req, res) {
+    webSvr.file("upload.do", function(req, res) {
       res.writeHead(200, {"Content-Type": "text/plain"});
       //Upload file is stored in req.files
       //form fields is stored in req.body
@@ -100,6 +122,25 @@ Receive upload file (it's a specfic filter)
       res.end(JSON.stringify(req.files));
     });
 
+Redirect
+--------------
+Redirect request, try at: http://localhost:8054/redirect
+
+    webSvr.url("redirect", function(req, res) {
+      res.redirect("/svr/websvr.all.js");
+    });
+
+Template:
+--------------
+Render template with params
+
+    webSvr.url("template.node", function(req, res) {
+      res.writeHead(200, {"Content-Type": "text/html"});
+      //render request with session username;
+      req.session.get(function(session){
+        res.render(req, {username: session["username"]});
+      });
+    });
 
 Other APIs
 --------------

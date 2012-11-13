@@ -104,7 +104,7 @@ webSvr.url("redirect", function(req, res) {
 });
 
 /*
-Template: render template with 
+Template: render template with params
 */
 webSvr.url("template.node", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/html"});
