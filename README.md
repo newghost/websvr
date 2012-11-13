@@ -130,7 +130,7 @@ Redirect request, try at: http://localhost:8054/redirect
       res.redirect("/svr/websvr.all.js");
     });
 
-Template:
+Template
 --------------
 Render template with params
 
