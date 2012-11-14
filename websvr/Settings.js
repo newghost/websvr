@@ -15,8 +15,10 @@ var Settings = {
   //default port of http
   port: 8054,
 
-  //enable debug information output?
+  //enable debug information output
   debug: false,
+  //receive buffer size 32k, i.e.: receive post data from ajax request
+  bufferSize: 32768,
 
   //https
   https: false,

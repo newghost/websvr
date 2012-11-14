@@ -1,8 +1,8 @@
 /*
 Mapper: Used for Filter & Handler,
 expression: required parameter
-handler: required parameter
-options: other optional parameters
+handler:    required parameter
+options:    optional parameters
 */
 
 var Mapper = function(expression, handler, options) {
@@ -26,7 +26,7 @@ Mapper.prototype = {
     //No expression? It's a general filter mapper
     if (!expression) return true;
 
-    switch(expression.constructor) {
+    switch (expression.constructor) {
       case String: return req.url.indexOf(expression) > -1;
       case RegExp: return expression.test(req.url);
     }

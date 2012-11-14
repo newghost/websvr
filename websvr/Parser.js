@@ -18,11 +18,11 @@ var Parser = function(req, res, mapper) {
   parse data in request, this should be done before parse session,
   because session stored in file
   */
-  var parseRequest = function() {
+  var parseBody = function() {
     //need to parse the request?
     if (mapper.parse && typeof req.body == "undefined") {
       //Must parser the request first, or the post data will lost;
-      RequestParser(req, res, function(data) {
+      BodyParser(req, res, function(data) {
         req.body = data;
         parseSession();
       });
@@ -54,10 +54,10 @@ var Parser = function(req, res, mapper) {
         req.files = files;
 
         //in fact request will not be parsed again, because body is not undefined
-        parseRequest();
+        parseBody();
       });
     }else{
-      parseRequest();
+      parseBody();
     };
   };
 

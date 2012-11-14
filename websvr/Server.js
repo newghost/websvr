@@ -4,8 +4,7 @@
 * Licenses: MIT, GPL
 */
 /*
-* Define WebSvr
-* Export WebSvr
+* Define and Export WebSvr
 */
 var WebSvr = module.exports = (function() {
 

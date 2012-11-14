@@ -1,123 +1,119 @@
-  
-var SessionParser;
-
+/*
+Parse request with session support
+*/
 //TODO: Need a child process of clear session
-(function() {
+var SessionParser = function(req, res){
+  var self = this;
 
-  SessionParser = function(req, res){
+  //session id
+  self.sid = null;
+  //session stored object
+  self.obj = null;
+  //is this new session?
+  self.new = false;
+
+  //sessoin file path
+  self.path = null;
+
+  //init session object
+  self.init(req, res);
+};
+
+SessionParser.prototype = {
+  init: function(req, res) {
+    var self   = this,
+        sidKey = "_wsid",
+        sidVal;
+
+    //Get or Create sid, sid exist in the cookie, read it
+    var cookie = req.headers.cookie || "";
+    var idx = cookie.indexOf(sidKey + "=");      
+    (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 38));
+
+    //Sid doesn't exist, create it
+    if (idx < 0 || sidVal.length != 32) {
+      sidVal = Math.uuid(32);
+      res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
+      self.new  = true;
+    };
+    self.sid = sidVal;
+
+    //Update sessionfile path
+    self.path = path.join(Settings.sessionDir, self.sid);
+  }
+
+  //Create new session object
+  , newObj: function(key, cb){
+    //Key is offered, return null of this key, else return empty session object
+    var val = key ? null : {};
+
+    this.obj = {};
+    cb && cb(val);
+    return val;
+  }
+
+  //Get value from session object
+  , getVal: function(key, cb){
+    //key is null, return all the session object
+    var val = key ? this.obj[key] : this.obj;
+    cb && cb(val);
+    return val;
+  }
+
+  //Set an key/value pair in session object
+  , set: function(key, val, cb) {
     var self = this;
 
-    //session id
-    self.sid = null;
-    //session stored object
-    self.obj = null;
-    //this is new session?
-    self.new = false;
+    //Get session object first
+    self.get(function() {
 
-    //sessoin file path
-    self.path = null;
+      //Add or update key/value in session object
+      self.obj[key] = val;
 
-    //init session object
-    self.init(req, res);
-  };
+      fs.writeFile(self.path, JSON.stringify(self.obj), function(err) {
+        if (err) {
+          console.log(err);
+          return;
+        }
 
-  SessionParser.prototype = {
-    init: function(req, res) {
-      var self   = this,
-          sidKey = "_wsid",
-          sidVal;
+        cb && cb(self.obj);
+      });
+    });
+  }
 
-      //Get or Create sid, sid exist in the cookie, read it
-      var cookie = req.headers.cookie || "";
-      var idx = cookie.indexOf(sidKey + "=");      
-      (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 38));
+  //Get value from session file
+  , get: function(key, cb) {
+    var self = this;
 
-      //Sid doesn't exist, create it
-      if (idx < 0 || sidVal.length != 32) {
-        sidVal = Math.uuid(32);
-        res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
-        self.new  = true;
-      };
-      self.sid = sidVal;
-
-      //Update sessionfile path
-      self.path = path.join(Settings.sessionDir, self.sid);
+    //The first parameter is callback function
+    if (key.constructor == Function) {
+      cb  = key;
+      key = null;
     }
 
-    //Create new session object
-    , newObj: function(key, cb){
-      //Key is offered, return null of this key, else return empty session object
-      var val = key ? null : {};
+    //The session object is already loaded
+    if (self.obj) return self.getVal(key, cb);
 
-      this.obj = {};
-      cb && cb(val);
-      return val;
-    }
+    //It's a new session file, need not to load it from file
+    if (self.new) return self.newObj(key, cb);
 
-    //Get value from session object
-    , getVal: function(key, cb){
-      //key is null, return all the session object
-      var val = key ? this.obj[key] : this.obj;
-      cb && cb(val);
-      return val;
-    }
-
-    //Set an key/value pair in session object
-    , set: function(key, val, cb) {
-      var self = this;
-
-      //Get session object first
-      self.get(function() {
-
-        //Add or update key/value in session object
-        self.obj[key] = val;
-
-        fs.writeFile(self.path, JSON.stringify(self.obj), function(err) {
+    //File operates, a bit of delay
+    fs.exists(self.path, function(exists) {
+      if (exists) {
+        fs.readFile(self.path, function(err, data) {
           if (err) {
             console.log(err);
             return;
-          }
+          };
+          data = data || "{}";
+          self.obj = JSON.parse(data);
 
-          cb && cb(self.obj);
+          return self.getVal(key, cb);
         });
-      });
-    }
-
-    //Get value from session file, callbak only need to be appllied once;
-    , get: function(key, cb) {
-      var self = this;
-
-      //The first parameter is callback function
-      if (key.constructor == Function) {
-        cb  = key;
-        key = null;
+      } else {
+        return self.newObj(key, cb);
       }
+    });
+  }
 
-      //The session object is already loaded
-      if (self.obj) return self.getVal(key, cb);
-
-      //It's a new session file, need not to load it from file
-      if (self.new) return self.newObj(key, cb);
-
-      //File operates, a bit of delay
-      fs.exists(self.path, function(exists) {
-        if (exists) {
-          fs.readFile(self.path, function(err, data) {
-            if (err) {
-              console.log(err);
-              return;
-            };
-            data = data || "{}";
-            self.obj = JSON.parse(data);
-
-            return self.getVal(key, cb);
-          });
-        } else {
-          return self.newObj(key, cb);
-        }
-      });
-    }
-
-  };
-
-}());
+};
