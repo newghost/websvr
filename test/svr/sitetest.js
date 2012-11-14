@@ -21,7 +21,6 @@ var webSvr = new WebSvr({
   //tempary upload file stored here, must be end with "/"
   uploadDir:  "tmp/upload/",
 
-
   listDir: true,
   debug: true
 });
@@ -48,7 +47,7 @@ webSvr.filter(/web\/[\w\.]+/, function(req, res) {
   //It's not index.htm/login.do, do the session validation
   if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
     req.session.get("username", function(val) {
-      console.log("session", val);
+      console.log("session username:", val);
 
       !val && res.end("You must login, first!");
     });

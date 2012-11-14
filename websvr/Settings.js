@@ -2,8 +2,6 @@
 Configurations
 */
 var Settings = {
-  version: 0.022,
-
   //root folder of web
   root: "../",
 
@@ -17,7 +15,7 @@ var Settings = {
 
   //enable debug information output
   debug: false,
-  //receive buffer size 32k, i.e.: receive post data from ajax request
+  //receive buffer,  default size 32k, i.e.: receive post data from ajax request
   bufferSize: 32768,
 
   //https
@@ -29,9 +27,11 @@ var Settings = {
   //logger file path
   logger:     "./tmp/log.txt",
 
-  //session file stored here, must be end with "/"
-  sessionDir: "./tmp/session/",
+  //session file stored here
+  sessionDir: "./tmp/session",
+  //session timeout, default is 20 minutes, in milliseconds
+  sessionAge: 10000,
 
-  //tempary upload file stored here, must be end with "/"
-  uploadDir:  "./tmp/upload/"
+  //tempary upload file stored here
+  uploadDir:  "./tmp/upload"
 };
