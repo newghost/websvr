@@ -2,7 +2,7 @@ WebSvr
 ==============
 A simple web server based on node.js
 Lincenses: MIT, GPL
-Version: 0.0.36
+Version: 0.0.4
 
 Features
 --------------
@@ -120,14 +120,6 @@ Receive upload file (it's a specfic filter)
       //form fields is stored in req.body
       res.write(JSON.stringify(req.body));
       res.end(JSON.stringify(req.files));
-    });
-
-Redirect
---------------
-Redirect request, try at: http://localhost:8054/redirect
-
-    webSvr.url("redirect", function(req, res) {
-      res.redirect("/svr/websvr.all.js");
     });
 
 Template
