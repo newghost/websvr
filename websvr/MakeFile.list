@@ -13,6 +13,7 @@ ref/Math.uuid.js
 #WebSvr Modules
 Mapper.js
 BodyParser.js
+SessionManager.js
 SessionParser.js
 Parser.js
 Filter.js

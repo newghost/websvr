@@ -1,22 +1,4 @@
 /*
-Clear timeout session files
-*/
-var SessionCleaner = (function() {
-
-  var list = [];
-
-  var add = function() {
-
-  };
-
-  return {
-    add: add
-  };
-
-})();
-
-
-/*
 Parse request with session support
 */
 //TODO: Need a child process of clear session
@@ -29,9 +11,6 @@ var SessionParser = function(req, res) {
   self.obj = null;
   //is this new session?
   self.new = false;
-
-  //sessoin file path
-  self.path = null;
 
   //init session object
   self.init(req, res);
@@ -56,24 +35,8 @@ SessionParser.prototype = {
     };
     self.sid = sidVal;
 
-    //Update sessionfile path
-    self.path = path.join(Settings.sessionDir, self.sid);
+    SessionManager.update(self.sid);
   }
-
-  //Clear session file, not stable, will not remove the expired sessoin file here
-  /*
-  , clear: function(key, cb) {
-    //Key is offered, return null of this key, else return empty session object
-    var self = this,
-        val = key ? null : {};
-
-    fs.unlink(self.path, function (err) {
-      if (err) console.log(err);
-      //return an empty sesson object
-      cb && cb(val);
-    });
-  }
-  */
 
   //Create new session object
   , newObj: function(key, cb) {
@@ -94,10 +57,6 @@ SessionParser.prototype = {
     var val = key ? self.obj[key] : self.obj;
     cb && cb(val);
 
-    //update session file accesstime
-    var time = new Date();
-    fs.utimes(self.path, time, time);
-
     return val;
   }
 
@@ -112,18 +71,13 @@ SessionParser.prototype = {
       self.obj[key] = val;
 
       //Write or modify json file
-      fs.writeFile(self.path, JSON.stringify(self.obj), function(err) {
+      fs.writeFile(SessionManager.getPath(self.sid), JSON.stringify(self.obj), function(err) {
         if (err) {
           console.log(err);
           return;
         }
 
-        //Update access date time in case of the session file is still existing
-        var time = new Date();
-        fs.utimes(self.path, time, time, function() {
-          cb && cb(self.obj);
-        });
-
+        cb && cb(self.obj);
       });
     });
   }
@@ -144,15 +98,17 @@ SessionParser.prototype = {
     //It's a new session file, need not to load it from file
     if (self.new) return self.newObj(key, cb);
 
+    var sessionPath = SessionManager.getPath(self.sid);
+
     //File operates, will cause delay
-    fs.stat(self.path, function(err, stats) {
+    fs.exists(sessionPath, function(exists) {
       //err: file doesn't exist
-      if (err) {
+      if (!exists) {
         return self.newObj(key, cb);
 
-      //session is not timeout
-      } else if (new Date() - stats.atime <= Settings.sessionAge) {
-        fs.readFile(self.path, function(err, data) {
+      //session not expired
+      } else if (SessionManager.isValid(self.sid)) {
+        fs.readFile(sessionPath, function(err, data) {
           if (err) {
             console.log(err);
             return;
@@ -163,7 +119,7 @@ SessionParser.prototype = {
           return self.getVal(key, cb);
         });
 
-      //session is timeout, treat it as new session
+      //session expired, treat it as new session
       } else {
         return self.newObj(key, cb);
       }
