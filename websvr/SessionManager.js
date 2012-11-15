@@ -30,8 +30,8 @@ var SessionManager = (function() {
 
   /*
   Does session expired?
-  This session is not in the manage list, add to the list, and treate it as not expired
-  i.e. The WebSvr is restarted, the session list maybe empty
+  If the session is not in the list, add to the list.
+  i.e. When WebSvr restarted, session will not expired.
   */
   var isValid = function(sid) {
     var now  = new Date();
@@ -42,9 +42,9 @@ var SessionManager = (function() {
   };
 
   /*
-  
+  Session clean handler
   */
-  var clean = function() {
+  var cleanHandler = function() {
     for (var sid in list) {
       !isValid(sid) && remove(sid);
     }
@@ -63,7 +63,7 @@ var SessionManager = (function() {
   //stop before new session start
   var start = function() {
     stop();
-    timer = setInterval(clean, gcTime);
+    timer = setInterval(cleanHandler, gcTime);
   };
 
   //start by default
