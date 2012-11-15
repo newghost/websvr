@@ -107,9 +107,9 @@ Template: render template with params
 */
 webSvr.url("template.node", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/html"});
-  //render request with session username;
+  //render template with session: { "username" : "admin" }
   req.session.get(function(session) {
-    res.render(req, {username: session["username"]});
+    res.render(req, session);
   });
 });
 
