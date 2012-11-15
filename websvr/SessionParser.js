@@ -1,7 +1,6 @@
 /*
 Parse request with session support
 */
-//TODO: Need a child process of clear session
 var SessionParser = function(req, res) {
   var self = this;
 
