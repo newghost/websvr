@@ -6,7 +6,7 @@ SessionManager:
 var SessionManager = (function() {
 
   //duration time
-  var gcTime = Settings.sessionAge + Settings.sessionGCT;
+  var gcTime = Settings.sessionTimeout + Settings.sessionGarbage;
 
   //timer
   var timer;
@@ -38,7 +38,7 @@ var SessionManager = (function() {
 
     !list[sid] && (list[sid] = now);
 
-    return now - list[sid] <= Settings.sessionAge
+    return now - list[sid] <= Settings.sessionTimeout
   };
 
   /*
@@ -50,9 +50,14 @@ var SessionManager = (function() {
     }
   };
 
-  //update session in list
+  //force update session in list
   var update = function(sid, datetime) {
-    isValid(sid) && (list[sid] = datetime || new Date());
+    list[sid] = datetime || new Date();
+  };
+
+  //refresh session in list, valid first, if not expired, update the time
+  var refresh = function(sid, datetime) {
+    isValid(sid) && update(sid, datetime);
   };
 
   var stop = function() {
@@ -73,6 +78,7 @@ var SessionManager = (function() {
     list:   list,
     update: update,
     remove: remove,
+    refresh: refresh,
     isValid: isValid,
     getPath: getPath,
     start:  start,

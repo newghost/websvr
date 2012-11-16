@@ -21,9 +21,12 @@ var fs      = require("fs");
 var path    = require("path");
 var qs      = require("querystring");
 
+var http    = require("http");
+var https	= require("https");
+
 //Open source library
 var _       = require("./lib/underscore");
-var mime    = require("./lib/mime")
+var mime    = require("./lib/mime");
 /*Settings.js*/
 /*
 Configurations
@@ -60,13 +63,13 @@ var Settings = {
   Session timeout, in milliseconds.
   When session is expired, session file will not deleted.
   */
-  sessionAge: 1440000,
+  sessionTimeout: 1440000,
   /*
   Session garbage collection time, in milliseconds.
   When session expired time is more than (sessionAge + sessionGCT),
   then session file will be deleted.
   */
-  sessionGCT: 3460000,
+  sessionGarbage: 3460000,
 
   //tempary upload file stored here
   uploadDir:  "./tmp/upload"
@@ -76,29 +79,32 @@ var Settings = {
 /*
 Logger: log sth
 */
-var Logger = (function(){
+var Logger = (function() {
 
   var lineSeparator = "\r\n",
       indentSeparator = "\t",
       depth = 9;
 
-  var log = function(logObj){
+  var log = function(logObj, dep) {
+
+    var depth = dep || depth;
 
     var output = new Date() + lineSeparator;
 
-    function print(pre, obj){
-      if(!obj) return;
-      for(var key in obj){
-        output = output + pre + key + " : " + obj[key] + lineSeparator;
-        if(typeof obj[key] == "object"){
-          (pre.length < depth) && print(pre + indentSeparator, obj[key]);
+    function print(pre, obj) {
+      if (!obj) return;
+      for (var key in obj) {
+        var val = obj[key];
+        output = output + pre + key + " : " + val + lineSeparator;
+        if (typeof val == "object") {
+          (pre.length < depth) && print(pre + indentSeparator, val);
         }
       }
     }
 
     print(indentSeparator, logObj);
 
-    fs.appendFile(Settings.logger, output, function(err){
+    fs.appendFile(Settings.logger, output, function(err) {
       console.log(err);
     });
   };
@@ -280,7 +286,7 @@ SessionManager:
 var SessionManager = (function() {
 
   //duration time
-  var gcTime = Settings.sessionAge + Settings.sessionGCT;
+  var gcTime = Settings.sessionTimeout + Settings.sessionGarbage;
 
   //timer
   var timer;
@@ -304,29 +310,34 @@ var SessionManager = (function() {
 
   /*
   Does session expired?
-  This session is not in the manage list, add to the list, and treate it as not expired
-  i.e. The WebSvr is restarted, the session list maybe empty
+  If the session is not in the list, add to the list.
+  i.e. When WebSvr restarted, session will not expired.
   */
   var isValid = function(sid) {
     var now  = new Date();
 
     !list[sid] && (list[sid] = now);
 
-    return now - list[sid] <= Settings.sessionAge
+    return now - list[sid] <= Settings.sessionTimeout
   };
 
   /*
-  
+  Session clean handler
   */
-  var clean = function() {
+  var cleanHandler = function() {
     for (var sid in list) {
       !isValid(sid) && remove(sid);
     }
   };
 
-  //update session in list
+  //force update session in list
   var update = function(sid, datetime) {
-    isValid(sid) && (list[sid] = datetime || new Date());
+    list[sid] = datetime || new Date();
+  };
+
+  //refresh session in list, valid first, if not expired, update the time
+  var refresh = function(sid, datetime) {
+    isValid(sid) && update(sid, datetime);
   };
 
   var stop = function() {
@@ -337,7 +348,7 @@ var SessionManager = (function() {
   //stop before new session start
   var start = function() {
     stop();
-    timer = setInterval(clean, gcTime);
+    timer = setInterval(cleanHandler, gcTime);
   };
 
   //start by default
@@ -347,6 +358,7 @@ var SessionManager = (function() {
     list:   list,
     update: update,
     remove: remove,
+    refresh: refresh,
     isValid: isValid,
     getPath: getPath,
     start:  start,
@@ -358,7 +370,6 @@ var SessionManager = (function() {
 /*
 Parse request with session support
 */
-//TODO: Need a child process of clear session
 var SessionParser = function(req, res) {
   var self = this;
 
@@ -392,7 +403,7 @@ SessionParser.prototype = {
     };
     self.sid = sidVal;
 
-    SessionManager.update(self.sid);
+    SessionManager.refresh(self.sid);
   }
 
   //Create new session object
@@ -435,6 +446,9 @@ SessionParser.prototype = {
         }
 
         cb && cb(self.obj);
+
+        //force update
+        SessionManager.update(self.sid);
       });
     });
   }
@@ -894,6 +908,8 @@ var WebSvr = module.exports = (function() {
         root,
         port;
 
+    var i = 0;
+
     var fileHandler = function(req, res) {
 
       var url = req.url,
@@ -911,7 +927,18 @@ var WebSvr = module.exports = (function() {
 
         //Is file? Open this file and send to client.
         if (stat.isFile()) {
-          writeFile(res, fullPath);
+          // "If-modified-since" not defined, mark it as 1970-01-01 0:0:0
+          var cacheTime = new Date(req.headers["if-modified-since"] || 1);
+
+          // The file is modified
+          if (stat.mtime > cacheTime) {
+            res.setHeader("Last-Modified", stat.mtime.toUTCString());
+            writeFile(res, fullPath);
+          // Else send "not modifed"
+          } else {
+            res.writeHead(304);
+            res.end();
+          }
         }
 
         //Is Directory? List all the files and folders.
@@ -941,6 +968,7 @@ var WebSvr = module.exports = (function() {
         self.writeFile(res, filePath, cb);
       };
 
+      //301/302 : move permanently
       res.redirect = function(url, status) {
         res.writeHead(status ? status : 302, { "Location": url });
         res.end();
@@ -1007,10 +1035,6 @@ var WebSvr = module.exports = (function() {
       });
     };
 
-    //TODO: Support 301 move permanently
-
-    //TODO: Support 304 client-side cache
-
     self.write403 = function(res) {
       res.writeHead(403, {"Content-Type": "text/html"});
       res.end("Access forbidden!");
@@ -1031,7 +1055,7 @@ var WebSvr = module.exports = (function() {
 
       //Create http server
       if (options.http) {
-        var httpSvr = require("http").createServer(requestHandler);
+        var httpSvr = http.createServer(requestHandler);
         httpSvr.listen(port);
 
         console.log("Http server running at"
@@ -1047,7 +1071,7 @@ var WebSvr = module.exports = (function() {
         var httpsOpts = options.httpsOpts,
             httpsPort = options.httpsPort;
 
-        var httpsSvr = require("https").createServer(httpsOpts, requestHandler);
+        var httpsSvr = https.createServer(httpsOpts, requestHandler);
         httpsSvr.listen(httpsPort);
 
         console.log("Https server running at"

@@ -20,6 +20,9 @@ var fs      = require("fs");
 var path    = require("path");
 var qs      = require("querystring");
 
+var http    = require("http");
+var https	= require("https");
+
 //Open source library
 var _       = require("./lib/underscore");
-var mime    = require("./lib/mime")
+var mime    = require("./lib/mime");

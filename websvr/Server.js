@@ -16,6 +16,8 @@ var WebSvr = module.exports = (function() {
         root,
         port;
 
+    var i = 0;
+
     var fileHandler = function(req, res) {
 
       var url = req.url,
@@ -33,7 +35,18 @@ var WebSvr = module.exports = (function() {
 
         //Is file? Open this file and send to client.
         if (stat.isFile()) {
-          writeFile(res, fullPath);
+          // "If-modified-since" not defined, mark it as 1970-01-01 0:0:0
+          var cacheTime = new Date(req.headers["if-modified-since"] || 1);
+
+          // The file is modified
+          if (stat.mtime > cacheTime) {
+            res.setHeader("Last-Modified", stat.mtime.toUTCString());
+            writeFile(res, fullPath);
+          // Else send "not modifed"
+          } else {
+            res.writeHead(304);
+            res.end();
+          }
         }
 
         //Is Directory? List all the files and folders.
@@ -63,6 +76,7 @@ var WebSvr = module.exports = (function() {
         self.writeFile(res, filePath, cb);
       };
 
+      //301/302 : move permanently
       res.redirect = function(url, status) {
         res.writeHead(status ? status : 302, { "Location": url });
         res.end();
@@ -129,10 +143,6 @@ var WebSvr = module.exports = (function() {
       });
     };
 
-    //TODO: Support 301 move permanently
-
-    //TODO: Support 304 client-side cache
-
     self.write403 = function(res) {
       res.writeHead(403, {"Content-Type": "text/html"});
       res.end("Access forbidden!");
@@ -153,7 +163,7 @@ var WebSvr = module.exports = (function() {
 
       //Create http server
       if (options.http) {
-        var httpSvr = require("http").createServer(requestHandler);
+        var httpSvr = http.createServer(requestHandler);
         httpSvr.listen(port);
 
         console.log("Http server running at"
@@ -169,7 +179,7 @@ var WebSvr = module.exports = (function() {
         var httpsOpts = options.httpsOpts,
             httpsPort = options.httpsPort;
 
-        var httpsSvr = require("https").createServer(httpsOpts, requestHandler);
+        var httpsSvr = https.createServer(httpsOpts, requestHandler);
         httpsSvr.listen(httpsPort);
 
         console.log("Https server running at"

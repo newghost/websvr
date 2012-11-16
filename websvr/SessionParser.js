@@ -34,7 +34,7 @@ SessionParser.prototype = {
     };
     self.sid = sidVal;
 
-    SessionManager.update(self.sid);
+    SessionManager.refresh(self.sid);
   }
 
   //Create new session object
@@ -77,6 +77,9 @@ SessionParser.prototype = {
         }
 
         cb && cb(self.obj);
+
+        //force update
+        SessionManager.update(self.sid);
       });
     });
   }

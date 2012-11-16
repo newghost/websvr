@@ -33,13 +33,13 @@ var Settings = {
   Session timeout, in milliseconds.
   When session is expired, session file will not deleted.
   */
-  sessionAge: 1440000,
+  sessionTimeout: 1440000,
   /*
   Session garbage collection time, in milliseconds.
   When session expired time is more than (sessionAge + sessionGCT),
   then session file will be deleted.
   */
-  sessionGCT: 3460000,
+  sessionGarbage: 3460000,
 
   //tempary upload file stored here
   uploadDir:  "./tmp/upload"
