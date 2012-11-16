@@ -22,7 +22,7 @@ var path    = require("path");
 var qs      = require("querystring");
 
 var http    = require("http");
-var https	= require("https");
+var https   = require("https");
 
 //Open source library
 var _       = require("./lib/underscore");
