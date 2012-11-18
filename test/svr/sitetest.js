@@ -46,15 +46,20 @@ Session Filter: protect web/* folder => (validation by session);
 webSvr.filter(/web\/[\w\.]+/, function(req, res) {
   //It's not index.htm/login.do, do the session validation
   if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
+    //Once session is get initialized
+    //TODO: Make sure next req.session.get() will not load session file again.
     req.session.get("username", function(val) {
       console.log("session username:", val);
 
       !val && res.end("You must login, first!");
-    });
-  }
 
-  //Link to next filter
-  req.filter.next();
+      //Link to next filter
+      req.filter.next();
+    });
+
+  } else {
+    req.filter.next();
+  }
 });
 
 
@@ -109,6 +114,7 @@ webSvr.url("template.node", function(req, res) {
   res.writeHead(200, {"Content-Type": "text/html"});
   //render template with session: { "username" : "admin" }
   req.session.get(function(session) {
+    //TODO: Change to req.render(session); 
     res.render(req, session);
   });
 });
