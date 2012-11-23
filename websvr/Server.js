@@ -39,13 +39,13 @@ var WebSvr = module.exports = (function() {
           var cacheTime = new Date(req.headers["if-modified-since"] || 1);
 
           // The file is modified
-          if (stat.mtime > cacheTime) {
-            res.setHeader("Last-Modified", stat.mtime.toUTCString());
-            writeFile(res, fullPath);
-          // Else send "not modifed"
-          } else {
+          if (Settings.cache && stat.mtime <= cacheTime) {
             res.writeHead(304);
             res.end();
+          // Else send "not modifed"
+          } else {
+            res.setHeader("Last-Modified", stat.mtime.toUTCString());
+            writeFile(res, fullPath);
           }
         }
 
@@ -67,7 +67,7 @@ var WebSvr = module.exports = (function() {
         //Execute old end
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
-        res.write = res.writeHead = function() {
+        res.write = res.writeHead = res.setHeader = function() {
           console.log("response is already end, response.write ignored!")
         };
       };
@@ -106,7 +106,8 @@ var WebSvr = module.exports = (function() {
           console.log(err);
           return;
         }
-        res.writeHead(200, { "Content-Type": mime.lookup(fullPath) });
+        res.setHeader("Content-Type", mime.lookup(fullPath));
+        res.writeHead(200);
         res.end(data, "binary");
       });
     };

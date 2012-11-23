@@ -10,6 +10,7 @@ Features
 - Handler: When a request matched a handler, it will returned, only one handler will be executed
 - Session: Stored in file, with JSON format
 - File: Support uploading files
+- TODO: Custom index page and 404 error pages
 
 Start
 --------------

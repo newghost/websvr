@@ -13,6 +13,8 @@ var Settings = {
   //default port of http
   port: 8054,
 
+  //enable client-side cache(304)?
+  cache: true,
   //enable debug information output
   debug: false,
   //receive buffer,  default size 32k, i.e.: receive post data from ajax request
