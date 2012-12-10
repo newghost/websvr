@@ -113,7 +113,7 @@ var Logger = (function() {
   return { log: log };
 
 })();
-/*ref\Math.uuid.js*/
+/*ref/Math.uuid.js*/
 /*!
 Math.uuid.js (v1.4)
 http://www.broofa.com
