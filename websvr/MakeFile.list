@@ -7,9 +7,6 @@ Global.js
 Settings.js
 Logger.js
 
-#Reference: JavaScript library
-ref/Math.uuid.js
-
 #WebSvr Modules
 Mapper.js
 BodyParser.js

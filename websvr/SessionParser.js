@@ -23,12 +23,12 @@ SessionParser.prototype = {
 
     //Get or Create sid, sid exist in the cookie, read it
     var cookie = req.headers.cookie || "";
-    var idx = cookie.indexOf(sidKey + "=");      
-    (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 38));
+    var idx = cookie.indexOf(sidKey + "=");
+    (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 31));
 
     //Sid doesn't exist, create it
-    if (idx < 0 || sidVal.length != 32) {
-      sidVal = Math.uuid(32);
+    if (idx < 0 || sidVal.length != 25) {
+      sidVal = SessionManager.create();
       res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
       self.new  = true;
     };
