@@ -265,7 +265,7 @@ var SessionManager = (function() {
       if (err) return console.log(err);
 
       //converted to minutes
-      var expire = (+new Date() - Settings.sessionTimeout) / 60000 | 0;
+      var expire = (+new Date() - gcTime) / 60000 | 0;
 
       files.forEach(function(file) {
         if (file.length == 25) {

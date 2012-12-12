@@ -39,3 +39,23 @@ test("SessionManager.create: test length", function() {
   console.log("min:", min, "max:", max);
 
 }, 1);
+
+test("Test parse Int string: | 0", function() {
+  var rnd = "18999334.3415921676";
+  rnd = rnd | 0;
+});
+
+test("Test parse Int string: parseInt", function() {
+  var rnd = "18999334.3415921676";
+  rnd = parseInt(rnd);
+});
+
+test("Test parse Int float: | 0", function() {
+  var rnd = 18999334.3415921676;
+  rnd = rnd | 0;
+});
+
+test("Test parse Int float: parseInt", function() {
+  var rnd = 18999334.3415921676;
+  rnd = parseInt(rnd);
+});
