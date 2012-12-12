@@ -22,13 +22,13 @@ var SessionManager = (function() {
   var create = function() {
     //Time stamp, change interval is 18.641 hours, higher 6 bits will be kept, this is used for delete the old sessions
     var uuid 
-      = ((+new Date()) >>> 21)                //Time stamp, change interval is 0.583 hours, higher 11 bits will be kept
+      = ((+new Date()) / 60000 | 0)          //Time stamp, change interval is 1 min, 8 chars
       + '-'
-      + ((Math.random() * 0x40000000 | 0))    //Random 1: Used for distinguish the session
-      + ((Math.random() * 0x40000000 | 0));   //Random 2: Used for distinguish the session
+      + ((Math.random() * 0x4000000 | 0))    //Random 1: Used for distinguish the session, max 8 chars
+      + ((Math.random() * 0x4000000 | 0));   //Random 2: Used for distinguish the session, max 8 chars
 
     //fix the length to 25
-    uuid += '0000000000'.substr(0, 25 - uuid.length);
+    uuid += '00000000000000000000'.substr(0, 25 - uuid.length);
 
     return uuid;
   };
@@ -70,6 +70,31 @@ var SessionManager = (function() {
     }
   };
 
+  /*
+  Clean the session in temp folder
+  */
+  var clean = function() {
+    fs.readdir(Settings.sessionDir, function(err, files) {
+      if (err) return console.log(err);
+
+      //converted to minutes
+      var expire = (+new Date() - Settings.sessionTimeout) / 60000 | 0;
+
+      files.forEach(function(file) {
+        if (file.length == 25) {
+          var stamp = parseInt(file.substr(0, file.indexOf('-')));
+
+          if (stamp) {
+            //remove the expired session
+            stamp < expire
+              ? remove(file)
+              : console.log("session skipped", file);
+          } 
+        }
+      });
+    });
+  };
+
   //refresh session in list, valid first, if not expired, update the time
   var refresh = function(sid, datetime) {
     isValid(sid) && update(sid, datetime);
@@ -82,7 +107,10 @@ var SessionManager = (function() {
 
   //stop before new session start
   var start = function() {
+    //stop cleanHandler if available
     stop();
+    //clean the old sessions
+    clean();
     timer = setInterval(cleanHandler, gcTime);
   };
 
@@ -97,8 +125,9 @@ var SessionManager = (function() {
     refresh: refresh,
     isValid: isValid,
     getPath: getPath,
-    start:  start,
-    stop:   stop
+    clean: clean,
+    start: start,
+    stop:  stop
   }
 
 })();
