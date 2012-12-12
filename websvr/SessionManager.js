@@ -114,9 +114,6 @@ var SessionManager = (function() {
     timer = setInterval(cleanHandler, gcTime);
   };
 
-  //start by default
-  start();
-
   return {
     list:   list,
     create: create,

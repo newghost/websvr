@@ -195,6 +195,12 @@ var WebSvr = module.exports = (function() {
       if (!options.debug) {
         console.log = function(){};
       }
+
+      /*
+      init modules
+      */
+      //Start session garbage collection
+      SessionManager.start();
     };
 
     //Public: close http server;
