@@ -4,6 +4,8 @@
 
 #Global object and description
 Global.js
+Utility.js
+
 Settings.js
 Logger.js
 

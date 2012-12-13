@@ -1,22 +1,22 @@
 /*Global.js*/
 /*
-* Description: WebSvr
-* Author: Kris Zhang
-* Lincense: MIT, GPL
-* Included Projects:
-- Formidable: Support uploading files, integrate
+* Description:  node-websvr
+* Author:       Kris Zhang
+* Licenses:     MIT, GPL
+* Project url:  https://github.com/newghost/node-websvr
+*
+* Referenced projects:
+* Formidable: Support uploading files, integrate
   https://github.com/felixge/node-formidable/
-- Formidable: Support uploading files, integrate
-  https://github.com/felixge/node-formidable/
-- Underscore: Add underscore a utility-belt library for JavaScript
+* Underscore: Add underscore a utility-belt library for JavaScript
   https://github.com/documentcloud/underscore
-- MIME: content-type in header
+* MIME: content-type in header
   https://github.com/broofa/node-mime
-- template: Template Engine
+* template: Template Engine
   https://github.com/olado/doT
 */
 
-//Node library
+//Node libraries
 var fs      = require("fs");
 var path    = require("path");
 var qs      = require("querystring");
@@ -24,9 +24,24 @@ var qs      = require("querystring");
 var http    = require("http");
 var https   = require("https");
 
-//Open source library
-var _       = require("./lib/underscore");
+//Open source libraries
 var mime    = require("./lib/mime");
+/*Utility.js*/
+/*
+* Utility
+*/
+var _ = {
+  //extend object to target
+  extend: function(tar, obj) {
+    if (!obj) return;
+
+    for (var key in obj) {
+      tar[key] = obj[key];
+    }
+
+    return tar;
+  }
+};
 /*Settings.js*/
 /*
 Configurations
