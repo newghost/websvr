@@ -20,6 +20,9 @@ var Settings = {
   //receive buffer,  default size 32k, i.e.: receive post data from ajax request
   bufferSize: 32768,
 
+  //default pages, only one is supported
+  defaultPage: "index.html",
+
   //https
   https: false,
   //default port of https

@@ -16,8 +16,6 @@ var WebSvr = module.exports = (function() {
         root,
         port;
 
-    var i = 0;
-
     var fileHandler = function(req, res) {
 
       var url = req.url,
@@ -28,35 +26,72 @@ var WebSvr = module.exports = (function() {
 
       var fullPath = path.join(root, url);
 
-      fs.stat(fullPath, function(err, stat) {
+      //Handle path
+      var handlePath = function(phyPath) {
+        fs.stat(phyPath, function(err, stat) {
 
-        //Consider as file not found
-        if (err) return self.write404(res);
+          //Consider as file not found
+          if (err) return self.write404(res);
 
-        //Is file? Open this file and send to client.
-        if (stat.isFile()) {
-          // "If-modified-since" not defined, mark it as 1970-01-01 0:0:0
-          var cacheTime = new Date(req.headers["if-modified-since"] || 1);
+          //Is file? Open this file and send to client.
+          if (stat.isFile()) {
+            // "If-modified-since" not defined, mark it as 1970-01-01 0:0:0
+            var cacheTime = new Date(req.headers["if-modified-since"] || 1);
 
-          // The file is modified
-          if (Settings.cache && stat.mtime <= cacheTime) {
-            res.writeHead(304);
-            res.end();
-          // Else send "not modifed"
-          } else {
-            res.setHeader("Last-Modified", stat.mtime.toUTCString());
-            writeFile(res, fullPath);
+            // The file is modified
+            if (Settings.cache && stat.mtime <= cacheTime) {
+              res.writeHead(304);
+              res.end();
+
+            // Else send "not modifed"
+            } else {
+              res.setHeader("Last-Modified", stat.mtime.toUTCString());
+              writeFile(res, phyPath);
+            }
           }
-        }
 
-        //Is Directory? List all the files and folders.
-        else if (stat.isDirectory()) {
-          options.listDir
-            ? ListDir.list(req, res, fullPath)
-            : self.write403(res);
-        }
+          //Is Directory?
+          else if (stat.isDirectory()) {
+            handleDefault(phyPath);
+          }
 
-      });
+          //Or write the 404 pages
+          else {
+            self.write404(res);
+          }
+
+        });
+      };
+
+      //List all the files and folders.
+      var handleDir = function(dirPath) {
+        options.listDir
+          ? ListDir.list(req, res, dirPath)
+          : self.write403(res);
+      };
+
+      //Handle default page
+      var handleDefault = function(dirPath) {
+        var defaultPage = options.defaultPage;
+
+        if (defaultPage) {
+          var defaultPath = path.join(dirPath, defaultPage);
+
+          fs.exists(defaultPath, function (exists) {
+            //If page exists hanle it again
+            if (exists) {
+              handlePath(defaultPath);
+            //If page doesn't exist hanlde the dir again
+            } else {
+              handleDir(dirPath);
+            }
+          });
+        } else {
+          handleDir(dirPath);
+        }
+      };
+
+      handlePath(fullPath);
     };
 
     var requestHandler = function(req, res) {
@@ -125,7 +160,7 @@ var WebSvr = module.exports = (function() {
     //Logger
     self.log = Logger.log;
 
-    //Get a fullpath of a request
+    //Get a full path of a request
     self.getFullPath = function(filePath) {
       return path.join(root, filePath);
     };

@@ -15,6 +15,8 @@ var webSvr = new WebSvr({
     cert: require("fs").readFileSync("svr/cert/certificate.pem")
   },
 
+  //defaultPage: "index.htm",
+
   //Change the default locations of tmp session and upload files
   //session file stored here, must be end with "/"
   sessionDir: "tmp/session/",
