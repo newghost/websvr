@@ -56,3 +56,13 @@ test("Extend by simple func:", function() {
   extend(tar, obj);
   //console.log(tar, obj);
 });
+
+test("String operate by []:", function() {
+  var dirPath = 'www/abc/login/';
+  dirPath[dirPath.length - 1] == '/';
+});
+
+test("String operate by charAt:", function() {
+  var dirPath = 'www/abc/login/';
+  dirPath.charAt(dirPath.length - 1) == '/';
+});

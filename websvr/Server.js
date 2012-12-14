@@ -80,6 +80,11 @@ var WebSvr = module.exports = (function() {
           fs.exists(defaultPath, function (exists) {
             //If page exists hanle it again
             if (exists) {
+              //In order to make it as a dir path for loading static resources
+              if (url[url.length - 1] != '/') {
+                return res.redirect(url + '/');
+              }
+
               handlePath(defaultPath);
             //If page doesn't exist hanlde the dir again
             } else {
@@ -149,13 +154,13 @@ var WebSvr = module.exports = (function() {
 
     //Explose API
     //Filter
-    self.filter = Filter.filter;
-    self.file = Filter.file;
+    self.filter   = Filter.filter;
+    self.file     = Filter.file;
 
     //Handler
-    self.url = Handler.url;
-    self.post = Handler.post;
-    self.session = Handler.session;
+    self.url      = Handler.url;
+    self.post     = Handler.post;
+    self.session  = Handler.session;
 
     //Logger
     self.log = Logger.log;
