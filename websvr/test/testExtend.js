@@ -1,16 +1,4 @@
-var test = function(msg, func, repeat) {
-  var t1 = new Date();
-
-  repeat = repeat || 1000000;
-
-  for (var i = 0; i < repeat; i++) {
-    func();
-  }
-
-  var t2 = new Date();
-
-  console.log("time used:" , t2 - t1, ", ", msg);
-};
+var test = require("./lib/test");
 
 var extend = function(tar, obj) {
   if (!obj) return;
