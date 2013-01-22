@@ -108,7 +108,7 @@ var WebSvr = module.exports = (function() {
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
         res.write = res.writeHead = res.setHeader = function() {
-          console.log("response is already end, response.write ignored!")
+          Logger.debug("response is already end, response.write ignored!")
         };
       };
 
@@ -143,7 +143,7 @@ var WebSvr = module.exports = (function() {
     var writeFile = function(res, fullPath) {
       fs.readFile(fullPath, function(err, data) {
         if (err) {
-          console.log(err);
+          Logger.log(err);
           return;
         }
         res.setHeader("Content-Type", mime.lookup(fullPath));
@@ -161,9 +161,6 @@ var WebSvr = module.exports = (function() {
     self.url      = Handler.url;
     self.post     = Handler.post;
     self.session  = Handler.session;
-
-    //Logger
-    self.log = Logger.log;
 
     //Get a full path of a request
     self.getFullPath = function(filePath) {
@@ -207,7 +204,7 @@ var WebSvr = module.exports = (function() {
         var httpSvr = http.createServer(requestHandler);
         httpSvr.listen(port);
 
-        console.log("Http server running at"
+        Logger.log("Http server running at"
           ,"Root:", root
           ,"Port:", port
         );
@@ -223,17 +220,12 @@ var WebSvr = module.exports = (function() {
         var httpsSvr = https.createServer(httpsOpts, requestHandler);
         httpsSvr.listen(httpsPort);
 
-        console.log("Https server running at"
+        Logger.log("Https server running at"
           ,"Root:", root
           ,"Port:", httpsPort
         );
 
         self.httpsSvr = httpsSvr;
-      }
-
-      //diable console.log information
-      if (!options.debug) {
-        console.log = function(){};
       }
 
       /*
@@ -245,7 +237,7 @@ var WebSvr = module.exports = (function() {
 
     //Public: close http server;
     self.close = function() {
-      self.httpSvr && self.httpSvr.close();
+      self.httpSvr  && self.httpSvr.close();
       self.httpsSvr && self.httpsSvr.close();
     };
 

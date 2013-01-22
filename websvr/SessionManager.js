@@ -45,7 +45,7 @@ var SessionManager = (function() {
     //remove from list
     delete list[sid];
 
-    console.log("session removed", sid);
+    Logger.log("session removed", sid);
   };
 
   /*
@@ -75,7 +75,7 @@ var SessionManager = (function() {
   */
   var clean = function() {
     fs.readdir(Settings.sessionDir, function(err, files) {
-      if (err) return console.log(err);
+      if (err) return Logger.log(err);
 
       //converted to minutes
       var expire = (+new Date() - gcTime) / 60000 | 0;
@@ -88,7 +88,7 @@ var SessionManager = (function() {
             //remove the expired session
             stamp < expire
               ? remove(file)
-              : console.log("session skipped", file);
+              : Logger.log("session skipped", file);
           } 
         }
       });

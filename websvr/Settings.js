@@ -16,7 +16,7 @@ var Settings = {
   //enable client-side cache(304)?
   cache: true,
   //enable debug information output
-  debug: false,
+  debug: true,
   //receive buffer,  default size 32k, i.e.: receive post data from ajax request
   bufferSize: 32768,
 

@@ -10,7 +10,7 @@ var Template = (function() {
     var fullpath = path.join(Settings.root, filename);
 
     fs.readFile(fullpath, function (err, html) {
-      err && console.log(err);
+      err && Logger.debug(err);
       err ? cb("") : cb(html);
     });
   };
@@ -21,7 +21,7 @@ var Template = (function() {
       tmplFn = engine.compile(chrunk, params);
       outFn(tmplFn(params));
     } catch(err) {
-      console.log(err);
+      Logger.debug(err);
       outFn(err);
     }
   };

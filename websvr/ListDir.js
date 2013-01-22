@@ -53,7 +53,7 @@ var ListDir = (function() {
       fs.readdir(dir, function(err, files) {
         if (err) {
           listEnd();
-          console.log(err);
+          Logger.debug(err);
           return;
         }
 
@@ -69,7 +69,7 @@ var ListDir = (function() {
               cur++;
 
               if (err) {
-                console.log(err);
+                Logger.debug(err);
               }else{
                 res.write(
                   date(stat.mtime)

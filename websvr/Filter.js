@@ -69,7 +69,7 @@ FilterChain.prototype = {
     }, options);
     */
     if (mapper.match(req)) {
-      console.log("filter matched", self.idx, mapper.expression, req.url);
+      Logger.debug("filter matched", self.idx, mapper.expression, req.url);
 
       //filter matched, parse the request and then execute it
       Parser(req, res, mapper);

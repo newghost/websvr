@@ -45,7 +45,7 @@ var Parser = function(req, res, mapper) {
 
       form.parse(req, function(err, fields, files) {
         if (err) {
-          console.log(err);
+          Logger.debug(err);
           return;
         };
 

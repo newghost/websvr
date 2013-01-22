@@ -3,15 +3,13 @@ Logger: log sth
 */
 var Logger = (function() {
 
-  var lineSeparator = "\r\n",
+  var lineSeparator   = "\r\n",
       indentSeparator = "\t",
       depth = 9;
 
-  var log = function(logObj, dep) {
-
-    var depth = dep || depth;
-
-    var output = new Date() + lineSeparator;
+  var write = function(logObj, dep) {
+    var depth   = dep || depth,
+        output  = new Date() + lineSeparator;
 
     function print(pre, obj) {
       if (!obj) return;
@@ -27,10 +25,36 @@ var Logger = (function() {
     print(indentSeparator, logObj);
 
     fs.appendFile(Settings.logger, output, function(err) {
-      console.log(err);
+      log(err);
     });
   };
 
-  return { log: log };
+  /*
+  Currnetly it's equal to console.log
+  */
+  var log = function() {
+    console.log.apply(console, arguments);
+  };
+
+  /*
+  Add data before log information
+  */
+  var debug = function() {
+    //diable console.log information
+    if (!Settings.debug) {
+      return;
+    }
+
+    var d = new Date().toString();
+
+    Array.prototype.splice.call(arguments, 0, 0, d.substr(0, d.indexOf(" GMT")));
+    console.log.apply(console, arguments);
+  };
+
+  return { 
+      log:    log
+    , write:  write
+    , debug:  debug
+  };
 
 })();

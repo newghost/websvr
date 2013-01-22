@@ -72,7 +72,7 @@ SessionParser.prototype = {
       //Write or modify json file
       fs.writeFile(SessionManager.getPath(self.sid), JSON.stringify(self.obj), function(err) {
         if (err) {
-          console.log(err);
+          Logger.debug(err);
           return;
         }
 
@@ -112,7 +112,7 @@ SessionParser.prototype = {
       } else if (SessionManager.isValid(self.sid)) {
         fs.readFile(sessionPath, function(err, data) {
           if (err) {
-            console.log(err);
+            Logger.debug(err);
             return;
           };
           data = data || "{}";

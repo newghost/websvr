@@ -61,7 +61,7 @@ var Settings = {
   //enable client-side cache(304)?
   cache: true,
   //enable debug information output
-  debug: false,
+  debug: true,
   //receive buffer,  default size 32k, i.e.: receive post data from ajax request
   bufferSize: 32768,
 
@@ -100,15 +100,13 @@ Logger: log sth
 */
 var Logger = (function() {
 
-  var lineSeparator = "\r\n",
+  var lineSeparator   = "\r\n",
       indentSeparator = "\t",
       depth = 9;
 
-  var log = function(logObj, dep) {
-
-    var depth = dep || depth;
-
-    var output = new Date() + lineSeparator;
+  var write = function(logObj, dep) {
+    var depth   = dep || depth,
+        output  = new Date() + lineSeparator;
 
     function print(pre, obj) {
       if (!obj) return;
@@ -124,11 +122,37 @@ var Logger = (function() {
     print(indentSeparator, logObj);
 
     fs.appendFile(Settings.logger, output, function(err) {
-      console.log(err);
+      log(err);
     });
   };
 
-  return { log: log };
+  /*
+  Currnetly it's equal to console.log
+  */
+  var log = function() {
+    console.log.apply(console, arguments);
+  };
+
+  /*
+  Add data before log information
+  */
+  var debug = function() {
+    //diable console.log information
+    if (!Settings.debug) {
+      return;
+    }
+
+    var d = new Date().toString();
+
+    Array.prototype.splice.call(arguments, 0, 0, d.substr(0, d.indexOf(" GMT")));
+    console.log.apply(console, arguments);
+  };
+
+  return { 
+      log:    log
+    , write:  write
+    , debug:  debug
+  };
 
 })();
 /*Mapper.js*/
@@ -250,7 +274,7 @@ var SessionManager = (function() {
     //remove from list
     delete list[sid];
 
-    console.log("session removed", sid);
+    Logger.log("session removed", sid);
   };
 
   /*
@@ -280,7 +304,7 @@ var SessionManager = (function() {
   */
   var clean = function() {
     fs.readdir(Settings.sessionDir, function(err, files) {
-      if (err) return console.log(err);
+      if (err) return Logger.log(err);
 
       //converted to minutes
       var expire = (+new Date() - gcTime) / 60000 | 0;
@@ -293,7 +317,7 @@ var SessionManager = (function() {
             //remove the expired session
             stamp < expire
               ? remove(file)
-              : console.log("session skipped", file);
+              : Logger.log("session skipped", file);
           } 
         }
       });
@@ -408,7 +432,7 @@ SessionParser.prototype = {
       //Write or modify json file
       fs.writeFile(SessionManager.getPath(self.sid), JSON.stringify(self.obj), function(err) {
         if (err) {
-          console.log(err);
+          Logger.debug(err);
           return;
         }
 
@@ -448,7 +472,7 @@ SessionParser.prototype = {
       } else if (SessionManager.isValid(self.sid)) {
         fs.readFile(sessionPath, function(err, data) {
           if (err) {
-            console.log(err);
+            Logger.debug(err);
             return;
           };
           data = data || "{}";
@@ -513,7 +537,7 @@ var Parser = function(req, res, mapper) {
 
       form.parse(req, function(err, fields, files) {
         if (err) {
-          console.log(err);
+          Logger.debug(err);
           return;
         };
 
@@ -605,7 +629,7 @@ FilterChain.prototype = {
     }, options);
     */
     if (mapper.match(req)) {
-      console.log("filter matched", self.idx, mapper.expression, req.url);
+      Logger.debug("filter matched", self.idx, mapper.expression, req.url);
 
       //filter matched, parse the request and then execute it
       Parser(req, res, mapper);
@@ -661,10 +685,10 @@ var Handler;
         var mapper = handlers[i];
         if (mapper.match(req)) {
 
-          console.log("handler matched", i, mapper.expression, req.url);
+          Logger.debug("handler matched", i, mapper.expression, req.url);
 
           var handler = mapper.handler,
-              type = handler.constructor.name;
+              type    = handler.constructor.name;
 
           switch(type) {
             //function: treated it as custom function handler
@@ -754,7 +778,7 @@ var ListDir = (function() {
       fs.readdir(dir, function(err, files) {
         if (err) {
           listEnd();
-          console.log(err);
+          Logger.debug(err);
           return;
         }
 
@@ -770,7 +794,7 @@ var ListDir = (function() {
               cur++;
 
               if (err) {
-                console.log(err);
+                Logger.debug(err);
               }else{
                 res.write(
                   date(stat.mtime)
@@ -806,7 +830,7 @@ var Template = (function() {
     var fullpath = path.join(Settings.root, filename);
 
     fs.readFile(fullpath, function (err, html) {
-      err && console.log(err);
+      err && Logger.debug(err);
       err ? cb("") : cb(html);
     });
   };
@@ -817,7 +841,7 @@ var Template = (function() {
       tmplFn = engine.compile(chrunk, params);
       outFn(tmplFn(params));
     } catch(err) {
-      console.log(err);
+      Logger.debug(err);
       outFn(err);
     }
   };
@@ -967,7 +991,7 @@ var WebSvr = module.exports = (function() {
         endFn.apply(res, arguments);
         //Rewirte write/writeHead on response object
         res.write = res.writeHead = res.setHeader = function() {
-          console.log("response is already end, response.write ignored!")
+          Logger.debug("response is already end, response.write ignored!")
         };
       };
 
@@ -1002,7 +1026,7 @@ var WebSvr = module.exports = (function() {
     var writeFile = function(res, fullPath) {
       fs.readFile(fullPath, function(err, data) {
         if (err) {
-          console.log(err);
+          Logger.log(err);
           return;
         }
         res.setHeader("Content-Type", mime.lookup(fullPath));
@@ -1020,9 +1044,6 @@ var WebSvr = module.exports = (function() {
     self.url      = Handler.url;
     self.post     = Handler.post;
     self.session  = Handler.session;
-
-    //Logger
-    self.log = Logger.log;
 
     //Get a full path of a request
     self.getFullPath = function(filePath) {
@@ -1066,7 +1087,7 @@ var WebSvr = module.exports = (function() {
         var httpSvr = http.createServer(requestHandler);
         httpSvr.listen(port);
 
-        console.log("Http server running at"
+        Logger.log("Http server running at"
           ,"Root:", root
           ,"Port:", port
         );
@@ -1082,17 +1103,12 @@ var WebSvr = module.exports = (function() {
         var httpsSvr = https.createServer(httpsOpts, requestHandler);
         httpsSvr.listen(httpsPort);
 
-        console.log("Https server running at"
+        Logger.log("Https server running at"
           ,"Root:", root
           ,"Port:", httpsPort
         );
 
         self.httpsSvr = httpsSvr;
-      }
-
-      //diable console.log information
-      if (!options.debug) {
-        console.log = function(){};
       }
 
       /*
@@ -1104,7 +1120,7 @@ var WebSvr = module.exports = (function() {
 
     //Public: close http server;
     self.close = function() {
-      self.httpSvr && self.httpSvr.close();
+      self.httpSvr  && self.httpSvr.close();
       self.httpsSvr && self.httpsSvr.close();
     };
 

@@ -43,10 +43,10 @@ var Handler;
         var mapper = handlers[i];
         if (mapper.match(req)) {
 
-          console.log("handler matched", i, mapper.expression, req.url);
+          Logger.debug("handler matched", i, mapper.expression, req.url);
 
           var handler = mapper.handler,
-              type = handler.constructor.name;
+              type    = handler.constructor.name;
 
           switch(type) {
             //function: treated it as custom function handler
