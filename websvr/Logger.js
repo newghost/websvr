@@ -7,6 +7,8 @@ var Logger = (function() {
       indentSeparator = "\t",
       depth = 9;
 
+  var Settings = Settings || { debug: true };
+
   var write = function(logObj, dep) {
     var depth   = dep || depth,
         output  = new Date() + lineSeparator;
@@ -45,13 +47,13 @@ var Logger = (function() {
       return;
     }
 
-    var d = new Date().toString();
+    var d = new Date();
 
-    Array.prototype.splice.call(arguments, 0, 0, d.substr(0, d.indexOf(" GMT")));
+    Array.prototype.splice.call(arguments, 0, 0, d.toISOString());
     console.log.apply(console, arguments);
   };
 
-  return { 
+  return {
       log:    log
     , write:  write
     , debug:  debug
