@@ -143,7 +143,7 @@ var WebSvr = module.exports = (function() {
     var writeFile = function(res, fullPath) {
       fs.readFile(fullPath, function(err, data) {
         if (err) {
-          Logger.log(err);
+          Logger.debug(err);
           return;
         }
         res.setHeader("Content-Type", mime.lookup(fullPath));
