@@ -4,30 +4,10 @@ var WebSvr = require("./../../websvr/websvr.js");
 //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
 var webSvr = new WebSvr({
-  root: "./",
-
-  //enable https
-  https: true,
-  //default port of https
-  httpsPort: 8443,
-  httpsOpts: {
-    key:  require("fs").readFileSync("svr/cert/privatekey.pem"),
-    cert: require("fs").readFileSync("svr/cert/certificate.pem")
-  },
-
-  //defaultPage: "index.htm",
-
-  //Change the default locations of tmp session and upload files
-  //session file stored here, must be end with "/"
-  sessionDir: "tmp/session/",
-  //tempary upload file stored here, must be end with "/"
-  uploadDir:  "tmp/upload/",
-
-  listDir: true,
-  debug: true
-});
-
-webSvr.start();
+    root: "./"
+  , listDir:  true
+  , debug:    true
+}).start();
 
 /*
 General filter: parse the post data / session before all request
@@ -124,15 +104,41 @@ webSvr.url("template.node", function(req, res) {
 /*
 Simple redirect API:
 */
-//Mapping "combine" to tool/Combine.js, trying at: http://localhost:8054/combine
-webSvr.url("combine", ["svr/tool/Combine.js"]);
-//Mapping "hello" to a string, trying at http://localhost:8054/hello
-webSvr.url("hello", "Hello WebSvr!");
-//Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-webSvr.post("post.htm", function(req, res) {
-  res.writeHead(200, {"Content-Type": "text/html"});
-  //With session support: "{session: true}"
-  res.write("You username is " + req.session.get("username"));
-  res.write('<form action="" method="post"><input name="input" /></form><br/>');
-  res.end('Received : ' + req.body);
-}, {session: true});
+webSvr
+  //Mapping "sitest" to tool/Combine.js, trying at: http://localhost:8054/combine
+  .url("sitetest", ["svr/sitetest.js"])
+  //Mapping "hello" to a string, trying at http://localhost:8054/hello
+  .url("hello", "Hello WebSvr!")
+  //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
+  .post("post.htm", function(req, res) {
+    res.writeHead(200, {"Content-Type": "text/html"});
+    //With session support: "{session: true}"
+    res.write("You username is " + req.session.get("username"));
+    res.write('<form action="" method="post"><input name="input" /></form><br/>');
+    res.end('Received : ' + req.body);
+  }, {session: true});
+
+
+var httpsSvr = new WebSvr({
+    root: "./"
+
+  //disable http server
+  , port:      null
+
+  //enable https server
+  , httpsPort: 8443
+  , httpsKey:  require("fs").readFileSync("svr/cert/privatekey.pem")
+  , httpsCert: require("fs").readFileSync("svr/cert/certificate.pem")
+
+  //, defaultPage: "index.htm"
+  , listDir: true
+
+  //Change the default locations of tmp session and upload files
+  //session file stored here
+  , sessionDir: "tmp/session/"
+  //tempary upload file stored here
+  , uploadDir:  "tmp/upload/"
+}).start();
+
+httpsSvr.filters   = webSvr.filters;
+httpsSvr.handlers  = webSvr.handlers;

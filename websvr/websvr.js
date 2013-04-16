@@ -1065,8 +1065,8 @@ var WebSvr = module.exports = function(options) {
 
     root = Settings.root;
 
-    //Create http server
-    if (options.port) {
+    //Create http server: Enable by default
+    if (Settings.port) {
       var port = Settings.port;
 
       var httpSvr = http.createServer(requestHandler);
@@ -1080,7 +1080,7 @@ var WebSvr = module.exports = function(options) {
       self.httpSvr = httpSvr;
     }
 
-    //Create https server
+    //Create https server: Disable by default
     if ( options.httpsPort
       && options.httpsKey
       && options.httpsCert) {
