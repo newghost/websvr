@@ -170,3 +170,35 @@ Do you want to re-use the filters & handlers?
 
     httpsSvr.filters   = webSvr.filters;
     httpsSvr.handlers  = webSvr.handlers;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+node-websvr
+====
+基于NodeJS的一个极简Web服务器, 专为ARM设计。
+假设嵌入式设备需要保持长时间稳定运行，当遇到问题时也可自动重启并恢复此前用户的Session会话。
