@@ -1,51 +1,36 @@
 WebSvr
 ==============
-A simple web server based on node.js
-Lincenses: MIT, GPL
-Version: 0.0.4
+A simple web server based on node.js.
+Lincenses: MIT
 
 Features
 --------------
+- Designed for ARM: We need to keep embed device running stable in a very long time(> 1 year?), it may run into issues but it can restart and re-covery the user sessions automatically.
 - Filter: A request will try to match all the filters first, and then pass to the Handler
 - Handler: When a request matched a handler, it will returned, only one handler will be executed
 - Session: Stored in file, with JSON format
 - File: Support uploading files
-- TODO: Custom index page and 404 error pages
+- Custom index pages
 
 Start
 --------------
-Edit in SiteTest.js or Create a new Site.js and added to MakeFile.list
+It's simple to start the websvr.
 
-    //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
-    //Trying at: http://localhost:8054
-    var webSvr = new WebSvr({
-      root: "./",
+  //import WebSvr module, assume we don't have NPM.
+  var WebSvr = require("./../../websvr/websvr.js");
 
-      //enable https
-      https: true,
-      //default port of https
-      httpsPort: 8443,
-      httpsOpts: {
-        key:  require("fs").readFileSync("svr/cert/privatekey.pem"),
-        cert: require("fs").readFileSync("svr/cert/certificate.pem")
-      },
+  //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
+  //Trying at: http://localhost:8054
+  var webSvr = new WebSvr({
+      root: "./"
+    , listDir:  true
+    , debug:    true
+  }).start();
 
-      //Change the default locations of tmp session and upload files
-      //session file stored here, must be end with "/"
-      sessionDir: "tmp/session/",
-      //tempary upload file stored here, must be end with "/"
-      uploadDir:  "tmp/upload/",
-
-
-      listDir: true,
-      debug: true
-    });
-
-    webSvr.start();
 
 Filter
 --------------
-Session based authentication (session stored in files), all the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"
+Session based authentication, basically useage:
 
     /*
     General filter: parse the post data / session before all request
@@ -59,6 +44,8 @@ Session based authentication (session stored in files), all the request under "t
       //Link to next filter
       req.filter.next();
     }, {parse:true, session:true});
+
+Advanced useage: All the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"
 
     /*
     Session Filter: protect web/* folder => (validation by session);
@@ -125,7 +112,7 @@ Receive upload file (it's a specfic filter)
 
 Template
 --------------
-Render template with params
+Render template with params, using doT template engine
 
     webSvr.url("template.node", function(req, res) {
       res.writeHead(200, {"Content-Type": "text/html"});
@@ -137,29 +124,49 @@ Render template with params
 
 Other APIs
 --------------
-Redirect
+Redirect, Url Mapping, Post Data
 
-    /*
-    Redirect: redirect request, try at: http://localhost:8054/redirect
-    */
-    webSvr.url("redirect", function(req, res){
-      res.redirect("/svr/websvr.all.js");
-    });
+    webSvr
+      //Mapping "sitest" to tool/Combine.js, trying at: http://localhost:8054/combine
+      .url("sitetest", ["svr/sitetest.js"])
+      //Mapping "hello" to a string, trying at http://localhost:8054/hello
+      .url("hello", "Hello WebSvr!")
+      //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
+      .post("post.htm", function(req, res) {
+        res.writeHead(200, {"Content-Type": "text/html"});
+        //With session support: "{session: true}"
+        res.write("You username is " + req.session.get("username"));
+        res.write('<form action="" method="post"><input name="input" /></form><br/>');
+        res.end('Received : ' + req.body);
+      }, {session: true});
 
-Url Mapping
 
-    //Mapping "combine" to tool/Combine.js, trying at: http://localhost:8054/combine
-    webSvr.url(/combine/, ["svr/tool/Combine.js"]);
-    //Mapping "hello" to a string, trying at http://localhost:8054/hello
-    webSvr.url(/hello/, "Hello WebSvr!");
+Multi-instance support
+--------------
+Start a https server, make sure that the port will no conflict with others.
 
-Post Data
+    var httpsSvr = new WebSvr({
+        root: "./"
 
-    //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-    webSvr.post(/post.htm/, function(req, res) {
-      res.writeHead(200, {"Content-Type": "text/html"});
-      //Need session support
-      res.write("You username is " + req.session.get("username"));
-      res.write('<form action="" method="post"><input name="input" /></form><br/>');
-      res.end('Received : ' + req.body);
-    }, {session: true});
+      //disable http server
+      , port:      null
+
+      //enable https server
+      , httpsPort: 8443
+      , httpsKey:  require("fs").readFileSync("svr/cert/privatekey.pem")
+      , httpsCert: require("fs").readFileSync("svr/cert/certificate.pem")
+
+      //, defaultPage: "index.htm"
+      , listDir: true
+
+      //Change the default locations of tmp session and upload files
+      //session file stored here
+      , sessionDir: "tmp/session/"
+      //tempary upload file stored here
+      , uploadDir:  "tmp/upload/"
+    }).start();
+
+Do you want to re-use the filters & handlers?
+
+    httpsSvr.filters   = webSvr.filters;
+    httpsSvr.handlers  = webSvr.handlers;
