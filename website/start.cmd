@@ -1,9 +1,11 @@
 REM start sitetest
 
 :loop
-node svr/sitetest.js
+  node svr/sitetest.js
 
-REM waiting...
-pause;
+  REM ***************************************
+  REM Server stop working, restarting...
+  REM ***************************************
 
-goto loop; 
+  ping -n 2 127.1>nul
+goto loop

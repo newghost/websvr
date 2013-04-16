@@ -1,9 +1,15 @@
 #!/bin/bash
-echo "start sitetest"
+echo start sitetest
+
+#change current dir, in order to call it from anywhere.
+cd $(dirname $0)
 
 while true; do
   node svr/sitetest.js
 
-  echo "exit, press any kep to continue..."
-  read -N1
+  echo ***************************************
+  echo Server stop working, restarting...
+  echo ***************************************
+
+  sleep 2
 done
