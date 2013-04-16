@@ -16,16 +16,16 @@ Start
 --------------
 It's simple to start the websvr.
 
-  //import WebSvr module, assume we don't have NPM.
-  var WebSvr = require("./../../websvr/websvr.js");
+    //import WebSvr module, assume we don't have NPM.
+    var WebSvr = require("./../../websvr/websvr.js");
 
-  //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
-  //Trying at: http://localhost:8054
-  var webSvr = new WebSvr({
-      root: "./"
-    , listDir:  true
-    , debug:    true
-  }).start();
+    //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
+    //Trying at: http://localhost:8054
+    var webSvr = new WebSvr({
+        root: "./"
+      , listDir:  true
+      , debug:    true
+    }).start();
 
 
 Filter
