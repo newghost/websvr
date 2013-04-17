@@ -42,6 +42,9 @@ var _ = {
   }
 };
 
+//Shortcuts
+var define = Object.defineProperty;
+
 
 /*
 * Define and Export WebSvr
@@ -890,7 +893,7 @@ var WebSvr = module.exports = function(options) {
 
         //Is file? Open this file and send to client.
         if (stat.isFile()) {
-          // "If-modified-since" not defined, mark it as 1970-01-01 0:0:0
+          // "If-modified-since" undefined, mark it as 1970-01-01 0:0:0
           var cacheTime = new Date(req.headers["if-modified-since"] || 1);
 
           // The file is modified
@@ -1119,7 +1122,7 @@ var WebSvr = module.exports = function(options) {
   };
 
   //property: filters & handlers
-  Object.defineProperty(self, 'filters', {
+  define(self, 'filters', {
     get: function() { 
       return Filter.filters
     },
@@ -1128,14 +1131,14 @@ var WebSvr = module.exports = function(options) {
     }
   });
 
-  Object.defineProperty(self, 'handlers', {
+  define(self, 'handlers', {
     get: function() {
       return Handler.handlers;
     },
     set: function(handlers) {
       Handler.handlers = handlers;
     }
-  })
+  });
 
   return self;
 
