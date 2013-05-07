@@ -11,5 +11,6 @@ while true; do
   echo Server stop working, restarting...
   echo ***************************************
 
+  #wait 2 seconds
   sleep 2
 done

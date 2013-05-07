@@ -23,8 +23,8 @@ var http    = require("http");
 var https   = require("https");
 
 //Open source libraries, some device may not have npm, so reference directly.
-var mime        = require("./lib/mime");
-var formidable  = require('./lib/incoming_form');
+var mime        = require("mime");
+var formidable  = require("formidable");
 
 /*
 * Utility
@@ -812,7 +812,7 @@ var WebSvr = module.exports = function(options) {
   */
   var Template = (function() {
 
-    var engine  = require("./lib/doT");
+    var engine  = require("dot");
 
     //get a file
     var getFile = function(filename, cb){

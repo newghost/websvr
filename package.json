@@ -1,0 +1,20 @@
+{
+  "name": "websvr",
+  "description": "A simple web server, implement http module(filter) and handler(servlet), autorecover persistent session",
+  "version": "0.1.0",
+  "author": "Kris Zhang <kris.newghost@gmail.com>",
+  "dependencies": {
+    "dot":  "1.0.0",
+    "formidable": "1.0.14",
+    "mime": "1.2.9"
+  },
+  "keywords": [
+    "web",
+    "server",
+    "https",
+    "filter",
+    "handler"
+  ],
+  "repository": "git://github.com/newghost/websvr.git",
+  "main": "./websvr/websvr.js"
+}
