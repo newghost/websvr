@@ -1,5 +1,5 @@
-//import WebSvr module, assume we don't have NPM.
-var WebSvr = require("./../../websvr/websvr.js");
+//import WebSvr module
+var WebSvr = require("websvr");
 
 //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
