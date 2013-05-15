@@ -121,7 +121,8 @@ Template
 --------------
 Render template with params, using doT template engine
 
-    webSvr.url("template.node", function(req, res) {
+    //webSvr.handle equal to webSvr.get/ webSvr.url
+    webSvr.handle("template.node", function(req, res) {
       res.writeHead(200, {"Content-Type": "text/html"});
       //render template with session: { "username" : "admin" }
       req.session.get(function(session) {
