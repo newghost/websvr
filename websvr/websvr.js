@@ -1022,7 +1022,10 @@ var WebSvr = module.exports = function(options) {
   self.file     = Filter.file;
 
   //Handler
+  self.get      = Handler.url;
   self.url      = Handler.url;
+  self.handle   = Handler.url;
+  self.handler  = Handler.url;
   self.post     = Handler.post;
   self.session  = Handler.session;
 
