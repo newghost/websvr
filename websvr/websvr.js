@@ -1,16 +1,8 @@
 /*
-* Description:  node-websvr
+* Description:  websvr
 * Author:       Kris Zhang
 * Licenses:     MIT
 * Project url:  https://github.com/newghost/node-websvr
-*
-* Referenced projects:
-* Formidable: Support uploading files, integrate
-  https://github.com/felixge/node-formidable/
-* MIME: content-type in header
-  https://github.com/broofa/node-mime
-* template: Template Engine
-  https://github.com/olado/doT
 */
 
 //Node libraries
@@ -1010,7 +1002,10 @@ var WebSvr = module.exports = function(options) {
         Logger.debug(err);
         return;
       }
-      res.setHeader("Content-Type", mime.lookup(fullPath));
+
+      !res.getHeader("Content-Type")
+        && res.setHeader("Content-Type", mime.lookup(fullPath));
+
       res.writeHead(200);
       res.end(data, "binary");
     });
