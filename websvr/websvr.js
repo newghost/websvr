@@ -330,10 +330,18 @@ var WebSvr = module.exports = function(options) {
     */
     var parseBody = function() {
       //need to parse the request?
-      if (mapper.parse && typeof req.body == "undefined") {
+      if ((mapper.parse || mapper.post) && typeof req.body == "undefined") {
         //Must parser the request first, or the post data will lost;
         BodyParser(req, res, function(data) {
-          req.body = data;
+          var body = data;
+
+          mapper.post == "json"
+            && (body = JSON.parse(data || "{}"));
+
+          mapper.post == "qs" || mapper.post == "querystring"
+            && (body = qs.parse(data || ""));
+
+          req.body = body;
           parseSession();
         });
       }else{
