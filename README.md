@@ -64,11 +64,14 @@ Advanced useage: All the request under "test/" will parse the post data and sess
           console.log("session", val);
 
           !val && res.end("You must login, first!");
-        });
-      }
 
-      //Link to next filter
-      req.filter.next();
+          //Link to next filter
+          req.filter.next();
+        });
+      } else {
+          //Link to next filter
+          req.filter.next();
+      }
     });
 
 
