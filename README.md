@@ -185,15 +185,9 @@ Do you want to re-use the filters & handlers?
 
 
 
-
-
-
-
-
-
-
-
-
+Demos
+====
+[icalc](https://github.com/newghost/websvr-icalc/)
 
 
 
