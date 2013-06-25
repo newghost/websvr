@@ -1,17 +1,17 @@
 WebSvr
 ==============
-A simple web server, implement http module(filter) and handler(servlet), autorecover persistent session.
+A simple web server, implement HttpModule(filter) and HttpHandler(servlet), autorecover user session when run into problems.
 
 Lincenses: MIT
 
 Features
 --------------
-- Designed for ARM: We need to keep embed device running stable in a very long time(> 1 year?), it may run into issues but it can restart and re-covery the user sessions automatically.
-- Filter: A request will try to match all the filters first, and then pass to the Handler
-- Handler: When a request matched a handler, it will returned, only one handler will be executed
+- Auto recover: It may run into problems but it can restart and re-covery the user sessions automatically.
+- Filter (Middleware):  A request will try to match all the filters first.
+- Handler: When a request matched a handler, it will returned, only one handler will be executed.
 - Session: Stored in file, with JSON format
 - File: Support uploading files
-- Custom index pages
+- Cache: Client-cahce is supported.
 
 Install
 --------------
@@ -35,7 +35,7 @@ It's simple to start the websvr.
     }).start();
 
 
-Filter
+Filter (HttpModule)
 --------------
 Session based authentication, basically useage:
 
@@ -75,7 +75,7 @@ Advanced useage: All the request under "test/" will parse the post data and sess
     });
 
 
-Handler
+Handler (HttpHandler, Servlet)
 --------------
 Handle Login and put the username in Session
 
