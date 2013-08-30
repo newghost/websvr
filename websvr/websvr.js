@@ -1031,6 +1031,7 @@ var WebSvr = module.exports = function(options) {
   self.handler  = Handler.url;
   self.post     = Handler.post;
   self.session  = Handler.session;
+  self.settings = Settings;
 
   //Get a full path of a request
   self.getFullPath = function(filePath) {
