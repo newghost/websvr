@@ -338,7 +338,7 @@ var WebSvr = module.exports = function(options) {
           mapper.post == "json"
             && (body = JSON.parse(data || "{}"));
 
-          mapper.post == "qs" || mapper.post == "querystring"
+          mapper.post == "qs"
             && (body = qs.parse(data || ""));
 
           req.body = body;
