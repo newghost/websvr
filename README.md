@@ -120,18 +120,103 @@ Receive upload file (it's a specfic filter)
       res.end(JSON.stringify(req.files));
     });
 
+
 Template
 --------------
 Render template with params, using doT template engine
 
-    //webSvr.handle equal to webSvr.get/ webSvr.url
-    webSvr.handle("template.node", function(req, res) {
-      res.writeHead(200, {"Content-Type": "text/html"});
-      //render template with session: { "username" : "admin" }
-      req.session.get(function(session) {
-        res.render(req, session);
-      });
-    });
+    res.render([tmplPath, ] model);
+
+"tmplPath" is optional, it will get the tmplate from req.url
+
+    res.render({json: true});
+
+View could be a relative template path, relative to root web dir
+
+    res.render("list.tmpl", {json: true});
+
+You can change template engine, etc: webSvr.engine(require("doT"));
+
+    webSvr.engine(engineLib);
+
+
+
+Settings
+--------------
+Return configuration of current WebSvr instance
+
+    webSvr.settings
+
+Settings API:
+
+    var Settings = {
+      //root folder of web
+      root: "../"
+
+      //http start
+      //default port of http
+      , port: 8054
+
+      //default port of https
+      , httpsPort:  8443
+      , httpsKey:   ""
+      , httpsCert:  ""
+
+      //list files in directory
+      , listDir: false
+      //enable client-side cache(304)
+      , cache: true
+      //enable debug information output
+      , debug: true
+      //receive buffer,  default size 32k, etc: receive post data from ajax request
+      , bufferSize: 32768
+
+      //default pages, only one is supported
+      , defaultPage: "index.html"
+
+      //logger file path
+      , logger:     os.tmpDir() + "/log.txt"
+
+      /*
+      Session timeout, in milliseconds.
+      When session is expired, session file will not deleted.
+      */
+      , sessionTimeout: 1440000
+      /*
+      Session garbage collection time, in milliseconds.
+      When session expired time is more than (sessionAge + sessionGCT),
+      then session file will be unlinked.
+      */
+      , sessionGarbage: 3460000
+
+      //session file stored here
+      , sessionDir: os.tmpDir()
+
+      //tempary upload file stored here
+      , uploadDir:  os.tmpDir()
+    };
+
+Response
+--------------
+Extension on reponse object
+
+Ouput file, relative path, relative to the web root
+
+    res.writeFile(filePath, [callback]);
+
+Ouput file, absolute path, relative to the server running 
+
+    res.sendFile(filePath,  [callback]);
+
+Reidrect request
+
+    res.redirect(url);
+
+Return request object
+
+    res.req
+
+
 
 Other APIs
 --------------
@@ -167,14 +252,6 @@ Start a https server, make sure that the port will no conflict with others.
       , httpsKey:  require("fs").readFileSync("svr/cert/privatekey.pem")
       , httpsCert: require("fs").readFileSync("svr/cert/certificate.pem")
 
-      //, defaultPage: "index.htm"
-      , listDir: true
-
-      //Change the default locations of tmp session and upload files
-      //session file stored here
-      , sessionDir: "tmp/session/"
-      //tempary upload file stored here
-      , uploadDir:  "tmp/upload/"
     }).start();
 
 Do you want to re-use the filters & handlers?

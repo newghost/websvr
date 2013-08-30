@@ -808,7 +808,7 @@ var WebSvr = module.exports = function(options) {
   }());
 
   /*
-  * Templates
+  * Template Engine
   */
   var Template = (function() {
 
@@ -836,36 +836,25 @@ var WebSvr = module.exports = function(options) {
     };
 
     return {
-      //render templates
-      render: function(chrunk, params) {
-        var res = this,
-            end = res.end;
+        //render templates
+        render: function(tmplUrl, model) {
+          var res = this,
+              end = res.end;
 
-        var url = chrunk.url,
-            con = chrunk.constructor;
+          if (arguments.length == 1) {
+            model   = tmplUrl;
+            tmplUrl = res.req.url;
 
-        //It's a http request (it has "url")
-        if (url) { 
-          getFile(url, function(tmpl) {
-            render(tmpl, params, end);
+            tmplUrl.indexOf('?') > -1 && (tmplUrl = tmplUrl.substr(0, tmplUrl.indexOf('?')));
+          }
+
+          getFile(tmplUrl, function(tmpl) {
+            render(tmpl, model, end);
           });
-        
-        //It's html contents (template codes)
-        } else if (con == String) {
-          render(chrunk, params, end);
-
-        //It's Array object (template file path)
-        } else if (con == Array) {
-          getFile(chrunk[0], function(tmpl) {
-            render(tmpl, params, end);
-          });
-
-        //Nothing matched end the response
-        } else {
-          end();
         }
-
-      }
+      , engine: function(engineLib) {
+          engine = engineLib;
+        }
     }
   }());
 
@@ -958,6 +947,9 @@ var WebSvr = module.exports = function(options) {
   };
 
   var requestHandler = function(req, res) {
+    //Make request accessible in response object
+    res.req = req;
+
     //Response may be shutdown when do the filter, in order not to cause exception,
     //Rewrite the write/writeHead functionalities of current response object
     var endFn = res.end;
@@ -1032,6 +1024,9 @@ var WebSvr = module.exports = function(options) {
   self.post     = Handler.post;
   self.session  = Handler.session;
   self.settings = Settings;
+
+  //Template
+  self.engine   = Template.engine;
 
   //Get a full path of a request
   self.getFullPath = function(filePath) {
