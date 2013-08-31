@@ -45,9 +45,6 @@ Session based authentication, basically useage:
       session: init the session and stored in req.session; 
     */
     webSvr.filter(function(req, res) {
-      //TODO: Add greeting words in filter
-      //res.write("Hello WebSvr!<br/>");
-
       //Link to next filter
       req.filter.next();
     }, {parse:true, session:true});
@@ -84,41 +81,18 @@ Handle Login and put the username in Session
       username: admin
       password: 12345678
     */
-    webSvr.session("login.do", function(req, res) {
-      var querystring = require("querystring");
-
-      //TODO: Add an parameter to auto-complete querystring.parse(req.body);
-      var qs = querystring.parse(req.body);
+    webSvr.handle("login.do", function(req, res) {
+      var qs = req.body;
       if (qs.username == "admin" && qs.password == "12345678") {
         //Put key/value pair in session
-        //TODO: Support put JSON object directly
         req.session.set("username", qs.username, function(session) {
-          //res.writeHead(200, {"Content-Type": "text/html"});
-          //res.writeFile("/web/setting.htm");
-          //TODO: Error handler of undefined methods
-          console.log(session);
           res.redirect("/web/setting.htm");
         });
       }else{
         res.writeHead(401);
         res.end("Wrong username/password");
       }
-    });
-
-File
---------------
-Receive upload file (it's a specfic filter)
-
-    /*
-    Uploader: upload.do => (receive handler)
-    */
-    webSvr.file("upload.do", function(req, res) {
-      res.writeHead(200, {"Content-Type": "text/plain"});
-      //Upload file is stored in req.files
-      //form fields is stored in req.body
-      res.write(JSON.stringify(req.body));
-      res.end(JSON.stringify(req.files));
-    });
+    }, {parse: "qs"});
 
 
 Template
@@ -218,23 +192,45 @@ Return request object
 
 
 
-Other APIs
+WebSvr APIs
 --------------
-Redirect, Url Mapping, Post Data
+Mapping url to file
 
-    webSvr
-      //Mapping "sitest" to tool/Combine.js, trying at: http://localhost:8054/combine
-      .url("sitetest", ["svr/sitetest.js"])
-      //Mapping "hello" to a string, trying at http://localhost:8054/hello
-      .url("hello", "Hello WebSvr!")
-      //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-      .post("post.htm", function(req, res) {
-        res.writeHead(200, {"Content-Type": "text/html"});
-        //With session support: "{session: true}"
-        res.write("You username is " + req.session.get("username"));
-        res.write('<form action="" method="post"><input name="input" /></form><br/>');
+    webSvr.url("sitetest", ["svr/sitetest.js"]);
+
+Mapping url to string
+
+    webSvr.url("hello", "Hello WebSvr!")
+
+Handle post
+
+    webSvr.post("post.htm", function(req, res) {
         res.end('Received : ' + req.body);
-      }, {session: true});
+    });
+
+    //Equal to
+    webSvr.handle("sessionrequire", function(req, res) {
+        console.log(req.session);
+        res.end();
+    }, {parse: true});
+
+Handle session
+
+    webSvr.session("sessionrequire", function(req, res) {
+        console.log(req.session);
+        res.end();
+    });
+
+
+Handle upload file, it's a specfic filter
+
+    webSvr.file("upload.do", function(req, res) {
+      res.writeHead(200, {"Content-Type": "text/plain"});
+      //Upload file is stored in req.files
+      //form fields is stored in req.body
+      res.write(JSON.stringify(req.body));
+      res.end(JSON.stringify(req.files));
+    });
 
 
 Multi-instance support
