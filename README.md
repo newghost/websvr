@@ -209,9 +209,8 @@ Handle post
     });
 
     //Equal to
-    webSvr.handle("sessionrequire", function(req, res) {
-        console.log(req.session);
-        res.end();
+    webSvr.handle("post.htm", function(req, res) {
+        res.end('Received : ' + req.body);
     }, {parse: true});
 
 Handle session
