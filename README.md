@@ -99,13 +99,13 @@ Template
 --------------
 Render template with params, using doT template engine
 
-    res.render([tmplPath, ] model);
+    res.render([view, ] model);
 
-"tmplPath" is optional, it will get the tmplate from req.url
+View is optional, in this case it will get the template path from req.url
 
     res.render({json: true});
 
-View could be a relative template path, relative to root web dir
+View is a relative path, relative to root web dir
 
     res.render("list.tmpl", {json: true});
 
