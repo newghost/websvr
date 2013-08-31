@@ -68,8 +68,8 @@ var WebSvr = module.exports = function(options) {
     , cache: true
     //enable debug information output
     , debug: true
-    //receive buffer,  default size 32k, etc: receive post data from ajax request
-    , bufferSize: 32768
+    //receive buffer,  default size 255Kb, etc: receive post data from ajax request
+    , bufferSize: 261120
 
     //default pages, only one is supported
     , defaultPage: "index.html"

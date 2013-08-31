@@ -92,7 +92,7 @@ Handle Login and put the username in Session
         res.writeHead(401);
         res.end("Wrong username/password");
       }
-    }, {parse: "qs"});
+    }, {post: "qs"});
 
 
 Template
@@ -211,7 +211,11 @@ Handle post
     //Equal to
     webSvr.handle("post.htm", function(req, res) {
         res.end('Received : ' + req.body);
-    }, {parse: true});
+    }, {post: true});
+
+Post type
+
+    post: true/"json"/"qs"
 
 Handle session
 
