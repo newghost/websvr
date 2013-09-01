@@ -2,7 +2,6 @@ WebSvr
 ==============
 A simple web server, implement HttpModule(filter) and HttpHandler(servlet), autorecover user session when run into problems.
 
-Lincenses: MIT
 
 Features
 --------------
@@ -260,27 +259,27 @@ Do you want to re-use the filters & handlers?
 
 
 
+Lincenses
+----
+MIT, see our license file
+
+
+
+
+
+
+
+
+
+
 
 Demo Sites
 ----
-
-1.  icalc: url [icalc.cn](http://icalc.cn),  source code [github](https://github.com/newghost/websvr-icalc/)
-
-
+1. ourjs: url [ourjs.com](http://ourjs.com)
+2. icalc: url [icalc.cn](http://icalc.cn),  source code [github](https://github.com/newghost/websvr-icalc/)
 
 
-
-
-
-
-
-
-
-
-
-
-
-node-websvr
+Websvr
 ====
 基于NodeJS的一个极简Web服务器, 专为ARM设计。
 假设嵌入式设备需要保持长时间稳定运行，当遇到问题时也可自动重启并恢复此前用户的Session会话。
