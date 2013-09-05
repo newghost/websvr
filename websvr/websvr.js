@@ -831,7 +831,7 @@ var WebSvr = module.exports = function(options) {
         outFn(tmplFn(params));
       } catch(err) {
         Logger.debug(err);
-        outFn(err);
+        outFn(JSON.stringify(err));
       }
     };
 
