@@ -539,7 +539,10 @@ var WebSvr = module.exports = function(options) {
       if (!expression) return true;
 
       switch (expression.constructor) {
-        case String: return req.url.indexOf(expression) > -1;
+        //String handler must start with root path, but it can bypass '/'
+        case String:
+          var idx = req.url.indexOf(expression);
+          return idx == 0 || idx == 1;
         case RegExp: return expression.test(req.url);
       }
 
