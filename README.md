@@ -94,6 +94,29 @@ Handle Login and put the username in Session
     }, {post: "qs"});
 
 
+Note:
+--------------
+Filter and Handler doesn't have the same match rules when you sending a request
+
+Filter  : Match any section in the request url, etc:
+
+    websvr.filter(".svr", cb);
+
+The result is
+
+    request: "domain.com/admin/root/login.svr"   match: true
+
+Handler : Match from the begining but it can bypass '/', etc: 
+
+    websvr.handle("root/login", cb) //or
+    websvr.handle("/root/login", cb)
+
+The result is:
+
+    request: "domain.com/root/login.svr"         match: true
+    request: "domain.com/admin/root/login.svr"   match: false
+
+
 Template
 --------------
 Render template with params, using doT template engine

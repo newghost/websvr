@@ -530,8 +530,11 @@ var WebSvr = module.exports = function(options) {
   Mapper.prototype = {
     /*
     Does this mapper matched this request?
+    Filter and Handler doesn't have the same matched rules when you passing a string
+    Filter  : Match any section of the request url,          etc: websvr.filter(".svr", cb);
+    Handler : Match from the begining but it can bypass '/', etc: websvr.handle("root/login", cb) or websvr.handle("/root/login")
     */
-    match: function(req) {
+    match: function(req, isHandler) {
       var self = this,
           expression = self.expression;
 
@@ -542,7 +545,7 @@ var WebSvr = module.exports = function(options) {
         //String handler must start with root path, but it can bypass '/'
         case String:
           var idx = req.url.indexOf(expression);
-          return idx == 0 || idx == 1;
+          return isHandler ? (idx == 0 || idx == 1) : (idx > -1);
         case RegExp: return expression.test(req.url);
       }
 
@@ -683,7 +686,8 @@ var WebSvr = module.exports = function(options) {
       for(var i = 0, len = Handler.handlers.length; i < len ; i++) {
 
         var mapper = Handler.handlers[i];
-        if (mapper.match(req)) {
+        //This is handler match
+        if (mapper.match(req, true)) {
 
           Logger.debug("handler matched", i, mapper.expression, req.url);
 
