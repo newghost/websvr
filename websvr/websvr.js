@@ -547,6 +547,14 @@ var WebSvr = module.exports = function(options) {
           var idx = req.url.indexOf(expression);
           return isHandler ? (idx == 0 || idx == 1) : (idx > -1);
         case RegExp: return expression.test(req.url);
+        case Array:
+          for (var i = 0, l = expression.length; i < l; i++) {
+            var idx = req.url.indexOf(expression[i])
+              , tag = isHandler ? (idx == 0 || idx == 1) : (idx > -1);
+            if (tag) return true;
+          }
+          return false;
+
       }
 
       return false;
@@ -822,17 +830,17 @@ var WebSvr = module.exports = function(options) {
     var engine  = require("dot");
 
     //get a file
-    var getFile = function(filename, cb){
+    var getFile = function(filename, cb) {
       var fullpath = path.join(Settings.root, filename);
 
-      fs.readFile(fullpath, function (err, html) {
+      fs.readFile(fullpath, function(err, html) {
         err && Logger.debug(err);
         err ? cb("") : cb(html);
       });
     };
 
     //render a file
-    var render = function(chrunk, params, outFn){
+    var render = function(chrunk, params, outFn) {
       try {
         tmplFn = engine.compile(chrunk, params);
         outFn(tmplFn(params));
@@ -931,7 +939,7 @@ var WebSvr = module.exports = function(options) {
       if (defaultPage) {
         var defaultPath = path.join(dirPath, defaultPage);
 
-        fs.exists(defaultPath, function (exists) {
+        fs.exists(defaultPath, function(exists) {
           //If page exists hanle it again
           if (exists) {
             //In order to make it as a dir path for loading static resources
@@ -989,7 +997,7 @@ var WebSvr = module.exports = function(options) {
     res.render = Template.render;
 
     //initial httprequest
-    var filterChain = new FilterChain(function(){
+    var filterChain = new FilterChain(function() {
 
       //if handler not match, send the request
       !Handler.handle(req, res) && fileHandler(req, res);

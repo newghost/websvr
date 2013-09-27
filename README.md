@@ -116,6 +116,7 @@ The result is:
     request: "domain.com/root/login.svr"         match: true
     request: "domain.com/admin/root/login.svr"   match: false
 
+You can use regular expression to match part of url in Handler.
 
 Template
 --------------
@@ -256,6 +257,12 @@ Handle upload file, it's a specfic filter
       res.write(JSON.stringify(req.body));
       res.end(JSON.stringify(req.files));
     });
+
+Multi-Mapping in Handler or Filter
+
+    webSvr.handle(["about", "help", "welcome"], function(req, res) {
+        res.writeFile(req.url + ".shtml");
+    }, {post: true});
 
 
 Multi-instance support
