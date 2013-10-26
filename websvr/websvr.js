@@ -335,11 +335,16 @@ var WebSvr = module.exports = function(options) {
         BodyParser(req, res, function(data) {
           var body = data;
 
-          mapper.post == "json"
-            && (body = JSON.parse(data || "{}"));
+          //handle exception
+          try {
+            mapper.post == "json"
+              && (body = JSON.parse(data || "{}"));
 
-          mapper.post == "qs"
-            && (body = qs.parse(data || ""));
+            mapper.post == "qs"
+              && (body = qs.parse(data || ""));
+          } catch(e) {
+            body = {};
+          }
 
           req.body = body;
           parseSession();
