@@ -868,9 +868,9 @@ var WebSvr = module.exports = function(options) {
 
     return {
         //render templates
-        render: function(tmplUrl, model) {
+        render: function(tmplUrl, model, outFn) {
           var res = this,
-              end = res.end;
+              end = outFn || res.end;
 
           if (arguments.length == 1) {
             model   = tmplUrl;
@@ -1060,6 +1060,7 @@ var WebSvr = module.exports = function(options) {
   self.settings = Settings;
 
   //Template
+  self.render   = Template.render;
   self.engine   = Template.engine;
   self.model    = Template.model;
 

@@ -149,6 +149,18 @@ You can define some default properties in model, for example header/footer, this
       , header  : require("fs").readFileSync("web/header.xml")
     });
 
+And more, you can use template and redner your it by using websvr.render(tmplPath, model, callback), tmplPath relative to webSvr.root;
+
+    //define default model
+    var model = {};
+    webSvr.model(model);
+
+    //define header/footer
+    webSvr.render("header.tmpl", {categoryList: category.categoryList}, function(html) {
+      model.header = html;
+      console.log(model);
+    });
+
 
 Settings
 --------------
