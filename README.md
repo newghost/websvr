@@ -98,7 +98,7 @@ Note:
 --------------
 Filter and Handler doesn't have the same match rules when you sending a request
 
-Filter  : Match any section in the request url, etc:
+Filter  : Match any section in the request url, for example
 
     websvr.filter(".svr", cb);
 
@@ -106,7 +106,7 @@ The result is
 
     request: "domain.com/admin/root/login.svr"   match: true
 
-Handler : Match from the begining but it can bypass '/', etc: 
+Handler : Match from the begining but it can bypass '/', for example: 
 
     websvr.handle("root/login", cb) //or
     websvr.handle("/root/login", cb)
@@ -136,11 +136,18 @@ You can change template engine,
 
     webSvr.engine(engineFunc);
 
-etc:
+for example:
 
     webSvr.engine(require("doT").compile);
     webSvr.engine(require("jade").compile);
 
+You can define some default properties in model, for example header/footer, this parameters will be overridden if they have the same name in your custom model.
+
+    webSvr.model({
+        title   : "New Page"
+      , username: "kris"
+      , header  : require("fs").readFileSync("web/header.xml")
+    });
 
 
 Settings
@@ -170,7 +177,7 @@ Settings API:
       , cache: true
       //enable debug information output
       , debug: true
-      //receive buffer,  default size 32k, etc: receive post data from ajax request
+      //receive buffer,  default size 32k,  example: receive post data from ajax request
       , bufferSize: 32768
 
       //default pages, only one is supported

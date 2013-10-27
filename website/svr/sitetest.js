@@ -90,6 +90,15 @@ webSvr.url("redirect", function(req, res) {
 });
 
 /*
+Template: define default template params
+*/
+webSvr.model({
+    title   : "New Page"
+  , username: "kris"
+  , header  : require("fs").readFileSync("web/header.xml")
+});
+
+/*
 Template: render template with params
 */
 webSvr.url("template.node", function(req, res) {

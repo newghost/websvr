@@ -68,7 +68,7 @@ var WebSvr = module.exports = function(options) {
     , cache: true
     //enable debug information output
     , debug: true
-    //receive buffer,  default size 255Kb, etc: receive post data from ajax request
+    //receive buffer,  default size 255Kb, e.g., receive post data from ajax request
     , bufferSize: 261120
 
     //default pages, only one is supported
@@ -536,8 +536,8 @@ var WebSvr = module.exports = function(options) {
     /*
     Does this mapper matched this request?
     Filter and Handler doesn't have the same matched rules when you passing a string
-    Filter  : Match any section of the request url,          etc: websvr.filter(".svr", cb);
-    Handler : Match from the begining but it can bypass '/', etc: websvr.handle("root/login", cb) or websvr.handle("/root/login")
+    Filter  : Match any section of the request url,          e.g., websvr.filter(".svr", cb);
+    Handler : Match from the begining but it can bypass '/', e.g., websvr.handle("root/login", cb) or websvr.handle("/root/login")
     */
     match: function(req, isHandler) {
       var self = this,
@@ -832,8 +832,10 @@ var WebSvr = module.exports = function(options) {
   */
   var Template = (function() {
 
-    //default engine
-    var engineFunc = require("dot").compile;
+    //default engine and defaultModel (e.g., define global footer/header in model)
+    var engineFunc    = require("dot").compile
+      , defaultModel  = null
+      ;
 
     //get a file
     var getFile = function(filename, cb) {
@@ -846,9 +848,17 @@ var WebSvr = module.exports = function(options) {
     };
 
     //render a file
-    var render = function(chrunk, params, outFn) {
+    var render = function(chrunk, model, outFn) {
+      var params;
+      if (defaultModel) {
+        params = Object.create(defaultModel);
+        _.extend(params, model);
+      } else {
+        params = model;
+      }
+
       try {
-        tmplFn = engineFunc(chrunk, params);
+        tmplFn = engineFunc(chrunk);
         outFn(tmplFn(params));
       } catch(err) {
         Logger.debug(err);
@@ -875,6 +885,9 @@ var WebSvr = module.exports = function(options) {
         }
       , engine: function(_engineFunc) {
           engineFunc = _engineFunc;
+        }
+      , model: function(_model) {
+          defaultModel = _model;
         }
     }
   }());
@@ -1048,6 +1061,7 @@ var WebSvr = module.exports = function(options) {
 
   //Template
   self.engine   = Template.engine;
+  self.model    = Template.model;
 
   //Get a full path of a request
   self.getFullPath = function(filePath) {

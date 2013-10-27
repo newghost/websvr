@@ -6,6 +6,7 @@
   <title>Login</title>
 </head>
 <body>
+  {{=it.header}}
   Hello: {{=it.username}}
   <fieldset>
     <form action="upload.do" method="post" enctype="multipart/form-data">
