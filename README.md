@@ -132,9 +132,14 @@ View is a relative path, relative to root web dir
 
     res.render("list.tmpl", {json: true});
 
-You can change template engine, etc: webSvr.engine(require("doT"));
+You can change template engine, 
 
-    webSvr.engine(engineLib);
+    webSvr.engine(engineFunc);
+
+etc:
+
+    webSvr.engine(require("doT").compile);
+    webSvr.engine(require("jade").compile);
 
 
 

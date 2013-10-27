@@ -4,7 +4,7 @@ var WebSvr = require("websvr");
 //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
 var webSvr = new WebSvr({
-    root: "./"
+    root: "./web"
   , listDir:  true
   , debug:    true
 }).start();
@@ -63,7 +63,7 @@ webSvr.session("login.do", function(req, res) {
       //res.writeFile("/web/setting.htm");
       //TODO: Error handler of undefined methods
       console.log(session);
-      res.redirect("/web/setting.htm");
+      res.redirect("setting.htm");
     });
   } else {
     res.writeHead(401);
@@ -93,11 +93,29 @@ webSvr.url("redirect", function(req, res) {
 Template: render template with params
 */
 webSvr.url("template.node", function(req, res) {
+  webSvr.engine(require("dot").compile);
+
   res.writeHead(200, {"Content-Type": "text/html"});
   //render template with session: { "username" : "admin" }
   req.session.get(function(session) {
-    //TODO: Change to req.render(session); 
-    res.render(req, session);
+    res.render(session);
+  });
+});
+
+/*
+Template: render template with jade
+*/
+webSvr.url("template.jade", function(req, res) {
+  webSvr.engine(require("jade").compile);
+
+  res.writeHead(200, {"Content-Type": "text/html"});
+  res.render({
+    pageTitle: "Testing Jade",
+    maintainer: {
+      name: 'Forbes Lindesay',
+      twitter: '@ForbesLindesay',
+      blog: 'forbeslindesay.co.uk'
+    }
   });
 });
 

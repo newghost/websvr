@@ -832,7 +832,8 @@ var WebSvr = module.exports = function(options) {
   */
   var Template = (function() {
 
-    var engine  = require("dot");
+    //default engine
+    var engineFunc = require("dot").compile;
 
     //get a file
     var getFile = function(filename, cb) {
@@ -847,7 +848,7 @@ var WebSvr = module.exports = function(options) {
     //render a file
     var render = function(chrunk, params, outFn) {
       try {
-        tmplFn = engine.compile(chrunk, params);
+        tmplFn = engineFunc(chrunk, params);
         outFn(tmplFn(params));
       } catch(err) {
         Logger.debug(err);
@@ -872,8 +873,8 @@ var WebSvr = module.exports = function(options) {
             render(tmpl, model, end);
           });
         }
-      , engine: function(engineLib) {
-          engine = engineLib;
+      , engine: function(_engineFunc) {
+          engineFunc = _engineFunc;
         }
     }
   }());
