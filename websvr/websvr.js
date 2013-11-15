@@ -24,7 +24,7 @@ var formidable  = require("formidable");
 var _ = {
   //extend object to target
   extend: function(tar, obj) {
-    if (!obj) return;
+    if (!obj) return tar;
 
     for (var key in obj) {
       tar[key] = obj[key];
@@ -73,6 +73,7 @@ var WebSvr = module.exports = function(options) {
 
     //default pages, only one is supported
     , defaultPage: "index.html"
+    , 404:         ""
 
     //logger file path
     , logger:     os.tmpDir() + "/log.txt"
@@ -1093,8 +1094,13 @@ var WebSvr = module.exports = function(options) {
   };
 
   self.write404 = function(res) {
+    var tmpl404 = Settings["404"];
+
     res.writeHead(404, {"Content-Type": "text/html"});
-    res.end("File not found!");
+
+    tmpl404
+      ? res.render(tmpl404, null)
+      : res.end("File not found!");
 
     return self;
   };

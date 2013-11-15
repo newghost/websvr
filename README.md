@@ -194,6 +194,8 @@ Settings API:
 
       //default pages, only one is supported
       , defaultPage: "index.html"
+      //404 template/static file
+      , 404:         "404.tmpl"
 
       //logger file path
       , logger:     os.tmpDir() + "/log.txt"
