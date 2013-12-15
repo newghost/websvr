@@ -189,8 +189,6 @@ Settings API:
       , cache: true
       //enable debug information output
       , debug: true
-      //receive buffer,  default size 32k,  example: receive post data from ajax request
-      , bufferSize: 32768
 
       //default pages, only one is supported
       , defaultPage: "index.html"

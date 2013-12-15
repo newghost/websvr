@@ -68,8 +68,6 @@ var WebSvr = module.exports = function(options) {
     , cache: true
     //enable debug information output
     , debug: true
-    //receive buffer,  default size 255Kb, e.g., receive post data from ajax request
-    , bufferSize: 261120
 
     //default pages, only one is supported
     , defaultPage: "index.html"
@@ -163,18 +161,14 @@ var WebSvr = module.exports = function(options) {
   */
   var BodyParser = function(req, res, callback) {
 
-    var buffer = new Buffer(Settings.bufferSize);
-
-    var length = 0, data = "";
+    var receives = '';
 
     req.on('data', function(chunk) {
-      chunk.copy(buffer, length, 0, chunk.length);
-      length += chunk.length;
+      receives += chunk.toString('utf8');
     });
 
     req.on('end', function() {
-      data = length > 0 ? buffer.toString('utf8', 0, length) : "";
-      callback(data);
+      callback(receives);
     });
   };
 
@@ -989,6 +983,10 @@ var WebSvr = module.exports = function(options) {
     //Rewrite the write/writeHead functionalities of current response object
     var endFn = res.end;
     res.end = function() {
+
+      //If Content-Type is undefined, using text/html as default
+      !res.headersSent && !res.getHeader('Content-Type') && res.setHeader("Content-Type", "text/html");
+
       //Execute old end
       endFn.apply(res, arguments);
       //Rewirte write/writeHead on response object
