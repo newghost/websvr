@@ -161,14 +161,14 @@ var WebSvr = module.exports = function(options) {
   */
   var BodyParser = function(req, res, callback) {
 
-    var receives = '';
+    var receives = [];
 
     req.on('data', function(chunk) {
-      receives += chunk.toString('utf8');
+      receives.push(chunk);
     });
 
     req.on('end', function() {
-      callback(receives);
+      callback(Buffer.concat(receives).toString());
     });
   };
 
