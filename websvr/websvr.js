@@ -315,10 +315,8 @@ var WebSvr = module.exports = function(options) {
   var SessionManager = (function() {
 
     //duration time
-    var gcTime = Settings.sessionTimeout + Settings.sessionGarbage;
-
-    //timer
-    var timer;
+    var gcTime
+      , timer;
 
     /*
     * session array object, alls: stored sessions and updated time
@@ -336,6 +334,10 @@ var WebSvr = module.exports = function(options) {
     Init the sessions, load into session pool
     */
     var init = function() {
+      gcTime = Settings.sessionTimeout + Settings.sessionGarbage;
+
+      console.log('Session Dir (gc time):', Settings.sessionDir, gcTime);
+
       fs.readdir(Settings.sessionDir, function(err, files) {
         if (err) return Logger.debug(err);
 
@@ -388,13 +390,14 @@ var WebSvr = module.exports = function(options) {
       uuid += '00000000000000000000'.substr(0, 25 - uuid.length);
 
       list[uuid] = {};
+      update(uuid);
 
       return uuid;
     };
 
-    //force update session in list
+    //force update session in list, convert to big int
     var update = function(sid, datetime) {
-      list[sid].__lastAccessTime = datetime || new Date();
+      list[sid].__lastAccessTime = +Date.parse(datetime) || +new Date();
     };
 
     //remove a sesson from list
@@ -470,16 +473,26 @@ var WebSvr = module.exports = function(options) {
     };
 
     var get = function(sid, key) {
-      var session = list[sid] || {};
-      return key ? session : session[key];
+      var session = list[sid];
+
+      if (!isValid(sid)) {
+        return '';
+      }
+      update(sid);
+      return key ? session[key] : session;
     };
 
     var set = function(sid, key, val, cb) {
-      var session = list[sid] || {};
+      var session = list[sid];
       session[key] = val;
+
+      if (!isValid(sid)) {
+        return;
+      }
+
       //force update
-      SessionManager.update(sid);
-      fs.writeFile(SessionManager.getPath(sid), JSON.stringify(session), function(err) {
+      update(sid);
+      fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
         if (err) {
           Logger.debug(err);
         }
