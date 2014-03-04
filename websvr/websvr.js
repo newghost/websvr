@@ -453,9 +453,14 @@ var WebSvr = module.exports = function(options) {
       });
     };
 
-    //refresh session in list, valid first, if not expired, update the time
+    //refresh session in list, valid first, if not expired, update the time, if not exist create new one
     var refresh = function(sid, datetime) {
-      isValid(sid) && update(sid, datetime);
+      if (!list[sid]) {
+        list[sid] = {};
+        update(sid, datetime);
+      } else {
+        isValid(sid) && update(sid, datetime);  
+      }      
     };
 
     var stop = function() {
@@ -473,7 +478,7 @@ var WebSvr = module.exports = function(options) {
     };
 
     var get = function(sid, key) {
-      var session = list[sid];
+      var session = list[sid] || {};
 
       if (!isValid(sid)) {
         return '';
@@ -483,7 +488,7 @@ var WebSvr = module.exports = function(options) {
     };
 
     var set = function(sid, key, val, cb) {
-      var session = list[sid];
+      var session = list[sid] || {};
       session[key] = val;
 
       if (!isValid(sid)) {
