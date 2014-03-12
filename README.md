@@ -164,6 +164,8 @@ And more, you can use template and render it by using websvr.render(tmplPath, mo
 
 Include file, you can using "#include" to include a file during rendering a template, in order to make the process easier, the file will fetched from the cache pool so the first refresh will not work after restart the server;
 
+###Be ware: include file path relative to web root, not the template file itself.###
+
     <body>
     <!--#include="header.part"-->
     <div id="articles" class="container home">
