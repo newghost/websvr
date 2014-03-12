@@ -70,6 +70,8 @@ var WebSvr = module.exports = function(options) {
     , cache: true
     //enable debug information output
     , debug: true
+	//enable cache of template/include file (when enabled templates will not be refreshed before restart)
+    , templateCache: true
 
     //default pages, only one is supported
     , defaultPage: "index.html"
@@ -841,6 +843,13 @@ var WebSvr = module.exports = function(options) {
   */
   var Template = (function() {
 
+    //Caching of template files.
+    var templatePool    = {}
+      , includeRegExp   = /<!--#include="[\w\.]+"-->/g
+      , includeBeginLen = 14
+      , includeAfterLen = 4
+      ;
+
     //default engine and defaultModel (e.g., define global footer/header in model)
     var engineFunc    = require("dot").compile
       , defaultModel  = null
@@ -850,9 +859,38 @@ var WebSvr = module.exports = function(options) {
     var getFile = function(filename, cb) {
       var fullpath = path.join(Settings.root, filename);
 
-      fs.readFile(fullpath, function(err, html) {
-        err && Logger.debug(err);
-        err ? cb("") : cb(html);
+      //if template cache enabled, get from cache pool directly
+      if (Settings.templateCache && templatePool[filename]) {
+        cb(templatePool[filename]);
+      } else {
+        fs.readFile(fullpath, function(err, tmpl) {
+          if (err) {
+            Logger.debug(err);
+            cb && cb("");
+          } else {
+            tmpl = tmpl.toString();
+            templatePool[filename] = tmpl;
+            Logger.debug('update template cache', filename);
+            cb && cb(tmpl);
+          }
+        });
+      }
+    };
+
+    var getTemplate = function(filename, cb) {
+      getFile(filename, function(tmpl) {
+        /*
+        find and update all the include files,
+        will get templates from cache for making the process easier,
+        the first refresh will not work, need some time to update the cache pool
+        */
+        tmpl = tmpl.replace(includeRegExp, function(fileStr) {
+          var includeFile = fileStr.substring(includeBeginLen, fileStr.length - includeAfterLen);
+          getFile(includeFile);
+          return templatePool[includeFile] || '';
+        });
+
+        cb(tmpl);
       });
     };
 
@@ -890,7 +928,7 @@ var WebSvr = module.exports = function(options) {
             tmplUrl.indexOf('?') > -1 && (tmplUrl = tmplUrl.substr(0, tmplUrl.indexOf('?')));
           }
 
-          getFile(tmplUrl, function(tmpl) {
+          getTemplate(tmplUrl, function(tmpl) {
             render(tmpl, model, end);
           });
         }

@@ -162,6 +162,17 @@ And more, you can use template and render it by using websvr.render(tmplPath, mo
       console.log(model);
     });
 
+Include file, you can using "#include" to include a file during rendering a template, in order to make the process easier, the file will fetched from the cache pool so the first refresh will not work after restart the server;
+
+    <body>
+    <!--#include="header.part"-->
+    <div id="articles" class="container home">
+
+Cache templates, by default, server will cache the templates(include the "include file" in the templates), turn it off via:
+
+    var webSvr = new WebSvr({
+      templateCache: false
+    }).start();
 
 Settings
 --------------
@@ -190,6 +201,8 @@ Settings API:
       , cache: true
       //enable debug information output
       , debug: true
+      //enable cache of template/include file (when enabled templates will not be refreshed before restart)
+      , templateCache: true
 
       //default pages, only one is supported
       , defaultPage: "index.html"
