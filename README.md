@@ -36,7 +36,7 @@ It's simple to start the websvr.
 
 Filter (HttpModule)
 --------------
-Session based authentication, basically useage:
+Session based authentication, will return '' if session value is undefined, basically useage:
 
     /*
     General filter: parse the post data / session before all request
@@ -49,6 +49,11 @@ Session based authentication, basically useage:
     }, {parse:true, session:true});
 
 Advanced useage: All the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"
+
+    /*
+    API, pass value of key to callback [optional]
+    */
+    var value = req.session.get(key [, callback]);
 
     /*
     Session Filter: protect web/* folder => (validation by session);

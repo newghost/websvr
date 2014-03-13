@@ -226,8 +226,9 @@ var WebSvr = module.exports = function(options) {
         key = null;
       }
       val = SessionManager.get(self.sid, key);
+      cb && cb(val);
 
-      return cb ? cb(val) : val;
+      return val;
     }
   };
 
@@ -338,7 +339,7 @@ var WebSvr = module.exports = function(options) {
     var init = function() {
       gcTime = Settings.sessionTimeout + Settings.sessionGarbage;
 
-      console.log('Session Dir (gc time):', Settings.sessionDir, gcTime);
+      Logger.debug('Session Dir (gc time):', Settings.sessionDir, gcTime);
 
       fs.readdir(Settings.sessionDir, function(err, files) {
         if (err) return Logger.debug(err);
@@ -486,7 +487,9 @@ var WebSvr = module.exports = function(options) {
         return '';
       }
       update(sid);
-      return key ? session[key] : session;
+      var val = session[key];
+      typeof val == 'undefined' && (val = '');
+      return key ? val : session;
     };
 
     var set = function(sid, key, val, cb) {
