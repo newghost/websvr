@@ -36,7 +36,7 @@ It's simple to start the websvr.
 
 Filter (HttpModule)
 --------------
-Session based authentication, will return '' if session value is undefined, basically useage:
+Session based authentication, basically useage:
 
     /*
     General filter: parse the post data / session before all request

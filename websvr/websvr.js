@@ -487,9 +487,7 @@ var WebSvr = module.exports = function(options) {
         return '';
       }
       update(sid);
-      var val = session[key];
-      typeof val == 'undefined' && (val = '');
-      return key ? val : session;
+      return key ? session[key] : session;
     };
 
     var set = function(sid, key, val, cb) {
