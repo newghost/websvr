@@ -862,7 +862,7 @@ var WebSvr = module.exports = function(options) {
 
       //if template cache enabled, get from cache pool directly
       if (Settings.templateCache && templatePool[filename]) {
-        cb(templatePool[filename]);
+        cb && cb(templatePool[filename]);
       } else {
         fs.readFile(fullpath, function(err, tmpl) {
           if (err) {
