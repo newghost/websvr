@@ -234,6 +234,9 @@ Settings API:
       //session file stored here
       , sessionDir: os.tmpDir()
 
+      //session domain, e.g. ".google.com"
+      , sessionDomain: ""
+
       //tempary upload file stored here
       , uploadDir:  os.tmpDir()
     };

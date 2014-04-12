@@ -95,6 +95,9 @@ var WebSvr = module.exports = function(options) {
     //session file stored here
     , sessionDir: os.tmpDir()
 
+    //session domain
+    , sessionDomain: ''
+
     //tempary upload file stored here
     , uploadDir:  os.tmpDir()
   };
@@ -190,9 +193,11 @@ var WebSvr = module.exports = function(options) {
 
   SessionParser.prototype = {
     init: function(req, res) {
-      var self   = this,
-          sidKey = "_wsid",
-          sidVal;
+      var self   = this
+        , sidKey = "_wsid"
+        , sidVal
+        , sidStr
+        ;
 
       //Get or Create sid, sid exist in the cookie, read it
       var cookie = req.headers.cookie || "";
@@ -202,7 +207,10 @@ var WebSvr = module.exports = function(options) {
       //Sid doesn't exist, create it
       if (idx < 0 || sidVal.length != 25) {
         sidVal = SessionManager.create();
-        res.setHeader("Set-Cookie", " _wsid=" + sidVal + "; path=/");
+        sidStr = " _wsid=" + sidVal + "; path=/";
+        Settings.sessionDomain && (sidStr += "; domain=" + Settings.sessionDomain);
+
+        res.setHeader("Set-Cookie", sidStr);
       };
       self.sid = sidVal;
 
