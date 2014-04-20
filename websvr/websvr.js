@@ -200,12 +200,10 @@ var WebSvr = module.exports = function(options) {
         ;
 
       //Get or Create sid, sid exist in the cookie, read it
-      var cookie = req.headers.cookie || "";
-      var idx = cookie.indexOf(sidKey + "=");
-      (idx >= 0) && (sidVal = cookie.substring(idx + 6, idx + 31));
+      var sidVal = req.cookies[sidKey];
 
       //Sid doesn't exist, create it
-      if (idx < 0 || sidVal.length != 25) {
+      if (sidVal.length != 25 || !SessionManager.isValid(sidVal)) {
         sidVal = SessionManager.create();
         sidStr = " _wsid=" + sidVal + "; path=/";
         Settings.sessionDomain && (sidStr += "; domain=" + Settings.sessionDomain);
@@ -315,7 +313,28 @@ var WebSvr = module.exports = function(options) {
       };
     };
 
-    parseFile();
+    /*
+    parse cookie in request
+    */
+    var parseCookies = function() {
+      var cookie = req.headers.cookie;
+      if (cookie) {
+        var cookieArr = cookie.split(';')
+          , cookies   = {}
+          ;
+        for (var i = 0; i < cookieArr.length; i++) {
+          var strCookie = cookieArr[i]
+            , idx       = strCookie.indexOf('=')
+            ;
+          idx > 0 && (cookies[strCookie.substr(0, idx).trim()] = strCookie.substr(idx + 1).trim());
+        }
+      }
+      req.cookies = cookies;
+
+      parseFile();
+    };
+
+    parseCookies();
   };
 
   /*

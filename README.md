@@ -123,6 +123,13 @@ The result is:
 
 You can use regular expression to match part of url in Handler.
 
+Cookies
+--------------
+
+    //get cookie value by key
+    req.cookies[key];
+
+
 Template
 --------------
 Render template with params, using doT template engine
