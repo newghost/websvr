@@ -203,7 +203,7 @@ var WebSvr = module.exports = function(options) {
       var sidVal = req.cookies[sidKey];
 
       //Sid doesn't exist, create it
-      if (sidVal.length != 25 || !SessionManager.isValid(sidVal)) {
+      if (!sidVal || sidVal.length != 25 || !SessionManager.isValid(sidVal)) {
         sidVal = SessionManager.create();
         sidStr = " _wsid=" + sidVal + "; path=/";
         Settings.sessionDomain && (sidStr += "; domain=" + Settings.sessionDomain);
