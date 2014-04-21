@@ -317,11 +317,13 @@ var WebSvr = module.exports = function(options) {
     parse cookie in request
     */
     var parseCookies = function() {
-      var cookie = req.headers.cookie;
+      var cookie  = req.headers.cookie
+        , cookies = {}
+        ;
+
       if (cookie) {
-        var cookieArr = cookie.split(';')
-          , cookies   = {}
-          ;
+        var cookieArr = cookie.split(';');
+
         for (var i = 0; i < cookieArr.length; i++) {
           var strCookie = cookieArr[i]
             , idx       = strCookie.indexOf('=')
@@ -329,8 +331,8 @@ var WebSvr = module.exports = function(options) {
           idx > 0 && (cookies[strCookie.substr(0, idx).trim()] = strCookie.substr(idx + 1).trim());
         }
       }
-      req.cookies = cookies;
 
+      req.cookies = cookies;
       parseFile();
     };
 
