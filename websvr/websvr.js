@@ -411,20 +411,18 @@ var WebSvr = module.exports = function(options) {
 
     //create a new session id
     var create = function() {
-      //Time stamp, change interval is 18.641 hours, higher 6 bits will be kept, this is used for delete the old sessions
-      var uuid 
-        = ((+new Date()) / 60000 | 0)          //Time stamp, change interval is 1 min, 8 chars
-        + '-'
-        + ((Math.random() * 0x4000000 | 0))    //Random 1: Used for distinguish the session, max 8 chars
-        + ((Math.random() * 0x4000000 | 0));   //Random 2: Used for distinguish the session, max 8 chars
+      /*
+      * (Time stamp - [random character ...]).length = 25
+      */
+      var id = (+new Date()).toString('32') + '-'; 
+      for (var i = id.length; i < 25; i++ ) {
+        id += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
+      }
 
-      //fix the length to 25
-      uuid += '00000000000000000000'.substr(0, 25 - uuid.length);
+      list[id] = {};
+      update(id);
 
-      list[uuid] = {};
-      update(uuid);
-
-      return uuid;
+      return id;
     };
 
     //force update session in list, convert to big int
@@ -435,7 +433,9 @@ var WebSvr = module.exports = function(options) {
     //remove a sesson from list
     var remove = function(sid) {
       //delete the file
-      fs.unlink(getPath(sid));
+      fs.unlink(getPath(sid), function(err) {
+        Logger.debug("unlink session file err", err);
+      });
       //remove from list
       delete list[sid];
 
@@ -485,7 +485,11 @@ var WebSvr = module.exports = function(options) {
       });
     };
 
-    //refresh session in list, valid first, if not expired, update the time, if not exist create new one
+    /*
+    * refresh session in list valid first,
+    * if not expired update the time
+    * if not exist create new one
+    */
     var refresh = function(sid, datetime) {
       if (!list[sid]) {
         list[sid] = {};
@@ -645,7 +649,7 @@ var WebSvr = module.exports = function(options) {
       var mapper = new Mapper(expression, handler, options);
       Filter.filters.push(mapper);
 
-      return self;
+      return this;
     }
 
     /*
@@ -657,7 +661,7 @@ var WebSvr = module.exports = function(options) {
       //insert at the top of the filter array
       Filter.filters.splice(0, 0, mapper);
 
-      return self;
+      return this;
     }
   };
 
