@@ -272,7 +272,7 @@ Return request object
 
 WebSvr APIs
 --------------
-Mapping url to file
+Mapping url to file, webSvr.url equal to webSvr.handle
 
     webSvr.url("sitetest", ["svr/sitetest.js"]);
 
@@ -318,6 +318,12 @@ Multi-Mapping in Handler or Filter
     webSvr.handle(["about", "help", "welcome"], function(req, res) {
         res.writeFile(req.url + ".shtml");
     }, {post: true});
+
+Pickup parameters from url expression
+
+    webSvr.handle("/verify/:id", function(req, res) {
+      var id = req.params.id;
+    });
 
 
 Multi-instance support

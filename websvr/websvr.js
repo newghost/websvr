@@ -585,8 +585,10 @@ var WebSvr = module.exports = function(options) {
     Handler : Match from the begining but it can bypass '/', e.g., websvr.handle("root/login", cb) or websvr.handle("/root/login")
     */
     match: function(req, isHandler) {
-      var self = this,
-          expression = self.expression;
+      var self        = this
+        , reqUrl      = req.url
+        , expression  = self.expression
+        ;
 
       //No expression? It's a general filter mapper
       if (!expression) return true;
@@ -594,20 +596,56 @@ var WebSvr = module.exports = function(options) {
       switch (expression.constructor) {
         //String handler must start with root path, but it can bypass '/'
         case String:
-          var idx = req.url.indexOf(expression);
-          return isHandler ? (idx == 0 || idx == 1) : (idx > -1);
-        case RegExp: return expression.test(req.url);
+          return self.matchString(req, isHandler, expression);
+        case RegExp: return expression.test(reqUrl);
         case Array:
           for (var i = 0, l = expression.length; i < l; i++) {
-            var idx = req.url.indexOf(expression[i])
-              , tag = isHandler ? (idx == 0 || idx == 1) : (idx > -1);
-            if (tag) return true;
+            if (self.matchString(req, isHandler, expression[i])) {
+              return true;
+            }
           }
           return false;
-
       }
 
       return false;
+    },
+
+    /*
+    Handle string expression like: /login/:username  or /userinfo/
+    */
+    matchString: function(req, isHandler, expression) {
+      var reqUrl = req.url;
+
+      //Pure string without params
+      if (expression.indexOf('/:') < 0) {
+        var idx = reqUrl.indexOf(expression);
+        return isHandler ? (idx == 0 || idx == 1) : (idx > -1);
+      //Handle and pickup params
+      } else {
+        //Remove the params in querystring
+        var idx = reqUrl.indexOf('?');
+        idx > 0 && (reqUrl = reqUrl.substr(0, idx));
+
+        var parts   = expression.split('/')
+          , start   = expression.charAt(0) === '/' ? 0 : 1
+          , urls    = reqUrl.split('/')
+          , params  = {}
+          ;
+
+        for (var i = 0, l = parts.length; i < l; i++) {
+          var part  = parts[i]
+            , url   = urls[i + start]
+            ;
+
+          if (part.charAt(0) === ':') {
+            params[part.substr(1)] = url;
+          } else if (part != url) {
+            return false;
+          }
+        }
+        _.extend(req.params, params);
+        return true;
+      }
     },
 
     /*
@@ -680,9 +718,10 @@ var WebSvr = module.exports = function(options) {
 
   FilterChain.prototype = {
     next: function() {
-      var self = this,
-          req  = self.req,
-          res  = self.res;
+      var self = this
+        , req  = self.req
+        , res  = self.res
+        ;
 
       var mapper = Filter.filters[self.idx++];
 
@@ -703,7 +742,7 @@ var WebSvr = module.exports = function(options) {
 
         //filter matched, parse the request and then execute it
         Parser(req, res, mapper);
-      }else{
+      } else {
         //filter not matched, validate next filter
         self.next();
       }
@@ -982,8 +1021,9 @@ var WebSvr = module.exports = function(options) {
 
   var fileHandler = function(req, res) {
 
-    var url = req.url,
-        hasQuery = url.indexOf("?");
+    var url       = req.url
+      , hasQuery  = url.indexOf("?")
+      ;
 
     //fs.stat can't recognize the file name with querystring;
     url = hasQuery > 0 ? url.substring(0, hasQuery) : url;
@@ -1101,6 +1141,9 @@ var WebSvr = module.exports = function(options) {
 
     //render template objects
     res.render = Template.render;
+
+    //params in the matched url
+    req.params = {};
 
     //initial httprequest
     var filterChain = new FilterChain(function() {
