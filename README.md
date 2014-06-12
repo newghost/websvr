@@ -325,6 +325,14 @@ Pickup parameters from url expression
       var id = req.params.id;
     });
 
+Parse parameters in url
+
+    * expression = /home/:key/:pager
+    *   /home/JavaScript => { id: 'JavaScript', pager: '' }
+    *   /key/JavaScript  => false 
+
+    var params = webSvr.parseUrl(expression, reqUrl);
+
 
 Multi-instance support
 --------------

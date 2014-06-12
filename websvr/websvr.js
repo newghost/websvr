@@ -622,30 +622,42 @@ var WebSvr = module.exports = function(options) {
         return isHandler ? (idx == 0 || idx == 1) : (idx > -1);
       //Handle and pickup params
       } else {
-        //Remove the params in querystring
-        var idx = reqUrl.indexOf('?');
-        idx > 0 && (reqUrl = reqUrl.substr(0, idx));
+        var params = this.parseUrl(expression, reqUrl);
+        params && _.extend(req.params, params);
+        return params;
+      }
+    },
 
-        var parts   = expression.split('/')
-          , start   = expression.charAt(0) === '/' ? 0 : 1
-          , urls    = reqUrl.split('/')
-          , params  = {}
+    /*
+    * Pickup the params in the request url
+    * expression = /home/:key/:pager
+    *   /home/JavaScript => { id: 'JavaScript', pager: '' }
+    *   /key/JavaScript  => false 
+    */
+    parseUrl: function(expression, reqUrl) {
+      //Remove the params in querystring
+      var idx = reqUrl.indexOf('?');
+      idx > 0 && (reqUrl = reqUrl.substr(0, idx));
+
+      var parts   = expression.split('/')
+        , start   = expression.charAt(0) === '/' ? 0 : 1
+        , urls    = reqUrl.split('/')
+        , params  = {}
+        ;
+
+      for (var i = 0, l = parts.length; i < l; i++) {
+        var part  = parts[i]
+          , url   = urls[i + start]
           ;
 
-        for (var i = 0, l = parts.length; i < l; i++) {
-          var part  = parts[i]
-            , url   = urls[i + start]
-            ;
-
-          if (part.charAt(0) === ':') {
-            params[part.substr(1)] = url;
-          } else if (part != url) {
-            return false;
-          }
+        if (part.charAt(0) === ':') {
+          params[part.substr(1)] = decodeURIComponent(url) || '';
+        } else if (part != url) {
+          return false;
         }
-        _.extend(req.params, params);
-        return true;
       }
+
+      return params;
     },
 
     /*
@@ -1176,6 +1188,9 @@ var WebSvr = module.exports = function(options) {
   };
 
   //API have function chain
+  //Mapper
+  self.parseUrl = Mapper.prototype.parseUrl;
+
   //Filter
   self.filter   = Filter.filter;
   self.file     = Filter.file;
