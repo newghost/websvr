@@ -654,7 +654,7 @@ var WebSvr = module.exports = function(options) {
           var paramName = part.substr(1);
           try {
             params[paramName] = decodeURIComponent(url) || '';
-          } catch {
+          } catch(err) {
             params[paramName] = url;
           }
         } else if (part != url) {
