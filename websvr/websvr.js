@@ -651,7 +651,12 @@ var WebSvr = module.exports = function(options) {
           ;
 
         if (part.charAt(0) === ':') {
-          params[part.substr(1)] = decodeURIComponent(url) || '';
+          var paramName = part.substr(1);
+          try {
+            params[paramName] = decodeURIComponent(url) || '';
+          } catch {
+            params[paramName] = url;
+          }
         } else if (part != url) {
           return false;
         }
