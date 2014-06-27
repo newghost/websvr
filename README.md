@@ -28,7 +28,7 @@ It's simple to start the websvr.
     //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
     //Trying at: http://localhost:8054
     var webSvr = new WebSvr({
-        root: "./"
+        home: "./"
       , listDir:  true
       , debug:    true
     }).start();
@@ -140,9 +140,13 @@ View is optional, in this case it will get the template path from req.url
 
     res.render({json: true});
 
-View is a relative path, relative to root web dir
+View is a relative path, relative to web home
 
     res.render("list.tmpl", {json: true});
+
+View is a absolute path, relative to web root
+
+    res.render("/list.tmpl", {json: true});
 
 You can change template engine, 
 
@@ -161,7 +165,7 @@ You can define some default properties in model, for example header/footer, this
       , header  : require("fs").readFileSync("web/header.xml")
     });
 
-And more, you can use template and render it by using websvr.render(tmplPath, model, callback), tmplPath relative to webSvr.root;
+And more, you can use template and render it by using websvr.render(tmplPath, model, callback), tmplPath relative to webSvr.home;
 
     //pre-defined model
     var model = {};
@@ -176,7 +180,7 @@ And more, you can use template and render it by using websvr.render(tmplPath, mo
 
 Include file, you can using "#include" to include a file during rendering a template, in order to make the process easier, the file will fetched from the cache pool so the first refresh will not work after restart the server;
 
-###Be ware: include file path relative to web root, not the template file itself.###
+###Be ware: include file path relative to web home, not the template file itself.###
 
     <body>
     <!--#include="header.part"-->
@@ -197,8 +201,8 @@ Return configuration of current WebSvr instance
 Settings API:
 
     var Settings = {
-      //root folder of web
-      root: "../"
+      //home folder of web
+      home: "../"
 
       //http start
       //default port of http
@@ -252,7 +256,7 @@ Response
 --------------
 Extension on reponse object
 
-Ouput file, relative path, relative to the web root
+Ouput file, relative path, relative to the web home
 
     res.writeFile(filePath, [callback]);
 
@@ -339,7 +343,7 @@ Multi-instance support
 Start a https server, make sure that the port will no conflict with others.
 
     var httpsSvr = new WebSvr({
-        root: "./"
+        home: "./"
 
       //disable http server
       , port:      null
