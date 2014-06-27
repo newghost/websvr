@@ -52,8 +52,8 @@ var WebSvr = module.exports = function(options) {
   Configurations
   */
   var Settings = {
-    //root folder of web
-    root: "../"
+    //home folder of web
+    home: "../"
 
     //http start
     //default port of http
@@ -582,7 +582,7 @@ var WebSvr = module.exports = function(options) {
     Does this mapper matched this request?
     Filter and Handler doesn't have the same matched rules when you passing a string
     Filter  : Match any section of the request url,          e.g., websvr.filter(".svr", cb);
-    Handler : Match from the begining but it can bypass '/', e.g., websvr.handle("root/login", cb) or websvr.handle("/root/login")
+    Handler : Match from the begining but it can bypass '/', e.g., websvr.handle("home/login", cb) or websvr.handle("/home/login")
     */
     match: function(req, isHandler) {
       var self        = this
@@ -594,7 +594,7 @@ var WebSvr = module.exports = function(options) {
       if (!expression) return true;
 
       switch (expression.constructor) {
-        //String handler must start with root path, but it can bypass '/'
+        //String handler must start with home path, but it can bypass '/'
         case String:
           return self.matchString(req, isHandler, expression);
         case RegExp: return expression.test(reqUrl);
@@ -947,7 +947,7 @@ var WebSvr = module.exports = function(options) {
 
     //get a file
     var getFile = function(filename, cb) {
-      var fullpath = path.join(Settings.root, filename);
+      var fullpath = path.join(Settings.home, filename);
 
       //if template cache enabled, get from cache pool directly
       if (Settings.templateCache && templatePool[filename]) {
@@ -1034,7 +1034,7 @@ var WebSvr = module.exports = function(options) {
 
   /*****************Web initial codes*************/
   //Parameters
-  var root;
+  var home;
 
   var fileHandler = function(req, res) {
 
@@ -1045,7 +1045,7 @@ var WebSvr = module.exports = function(options) {
     //fs.stat can't recognize the file name with querystring;
     url = hasQuery > 0 ? url.substring(0, hasQuery) : url;
 
-    var fullPath = path.join(root, url);
+    var fullPath = path.join(home, url);
 
     //Handle path
     var handlePath = function(phyPath) {
@@ -1140,7 +1140,7 @@ var WebSvr = module.exports = function(options) {
       };
     };
 
-    //relative path, relative to the web root
+    //relative path, relative to the web home
     res.writeFile = function(filePath, cb) {
       self.writeFile(res, filePath, cb);
     };
@@ -1216,12 +1216,12 @@ var WebSvr = module.exports = function(options) {
 
   //Get a full path of a request
   self.getFullPath = function(filePath) {
-    return path.join(root, filePath);
+    return path.join(home, filePath);
   };
 
   //Write file, filePath is relative path
   self.writeFile = function(res, filePath, cb, isSvrPath) {
-    !isSvrPath && (filePath = path.join(root, filePath));
+    !isSvrPath && (filePath = path.join(home, filePath));
     fs.exists(filePath, function(exist) {
       if (exist) {
         writeFile(res, filePath);
@@ -1259,7 +1259,7 @@ var WebSvr = module.exports = function(options) {
     //Update the default value of Settings
     _.extend(Settings, options);
 
-    root = Settings.root;
+    home = Settings.home;
 
     //Create http server: Enable by default
     if (Settings.port) {
@@ -1269,8 +1269,8 @@ var WebSvr = module.exports = function(options) {
       httpSvr.listen(port);
 
       Logger.log("Http server running at"
-        ,"Root:", root
-        ,"Port:", port
+        ,"home:", home
+        ,"port:", port
       );
 
       self.httpSvr = httpSvr;
@@ -1289,8 +1289,8 @@ var WebSvr = module.exports = function(options) {
       }, requestHandler).listen(httpsPort);
 
       Logger.log("Https server running at"
-        ,"Root:", root
-        ,"Port:", httpsPort
+        ,"home:", home
+        ,"port:", httpsPort
       );
 
       self.httpsSvr = httpsSvr;
