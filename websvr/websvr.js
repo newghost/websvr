@@ -52,8 +52,11 @@ var WebSvr = module.exports = function(options) {
   Configurations
   */
   var Settings = {
+    //root folder of server
+      root: "/"
+
     //home folder of web
-    home: "../"
+    , home: './'
 
     //http start
     //default port of http
@@ -947,12 +950,18 @@ var WebSvr = module.exports = function(options) {
 
     //get a file
     var getFile = function(filename, cb) {
-      var fullpath = path.join(Settings.home, filename);
-
       //if template cache enabled, get from cache pool directly
       if (Settings.templateCache && templatePool[filename]) {
         cb && cb(templatePool[filename]);
       } else {
+        /*
+        * webSvr.render('/home.tmpl', model)  : means related to Setting.root
+        * webSvr.render('home.tmpl', model)   : means related to Setting.home
+        */
+        var firstChar = filename && filename.charAt(0)
+          , fullpath  = path.join(firstChar == '/' ? Settings.root : Settings.home, filename)
+          ;
+
         fs.readFile(fullpath, function(err, tmpl) {
           if (err) {
             Logger.debug(err);
@@ -1013,7 +1022,10 @@ var WebSvr = module.exports = function(options) {
 
           if (arguments.length == 1) {
             model   = tmplUrl;
-            tmplUrl = res.req.url;
+            /*
+            * remove the first '/' make it as related path
+            */
+            tmplUrl = res.req.url.substr(1);
 
             tmplUrl.indexOf('?') > -1 && (tmplUrl = tmplUrl.substr(0, tmplUrl.indexOf('?')));
           }

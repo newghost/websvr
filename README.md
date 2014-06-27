@@ -142,10 +142,12 @@ View is optional, in this case it will get the template path from req.url
 
 View is a relative path, relative to web home
 
+    //means related to Setting.home
     res.render("list.tmpl", {json: true});
 
 View is a absolute path, relative to web root
 
+    //means related to Setting.root
     res.render("/list.tmpl", {json: true});
 
 You can change template engine, 
