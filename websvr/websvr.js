@@ -650,17 +650,17 @@ var WebSvr = module.exports = function(options) {
 
       for (var i = 0, l = parts.length; i < l; i++) {
         var part  = parts[i]
-          , url   = urls[i + start]
+          , param = urls[i + start]
           ;
 
         if (part.charAt(0) === ':') {
           var paramName = part.substr(1);
           try {
-            params[paramName] = decodeURIComponent(url) || '';
+            params[paramName] = decodeURIComponent(param || '');
           } catch(err) {
-            params[paramName] = url;
+            params[paramName] = param;
           }
-        } else if (part != url) {
+        } else if (part != param) {
           return false;
         }
       }
