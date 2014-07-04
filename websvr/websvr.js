@@ -53,7 +53,7 @@ var WebSvr = module.exports = function(options) {
   */
   var Settings = {
     //root folder of server
-      root: "/"
+      root: process.cwd()
 
     //home folder of web
     , home: './'
