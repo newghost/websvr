@@ -1209,6 +1209,7 @@ var WebSvr = module.exports = function(options) {
   self.parseUrl = Mapper.prototype.parseUrl;
 
   //Filter
+  self.use      = Filter.filter;
   self.filter   = Filter.filter;
   self.file     = Filter.file;
 
