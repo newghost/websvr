@@ -75,6 +75,13 @@ Advanced useage: All the request under "test/" will parse the post data and sess
       }
     });
 
+    /*
+    * filter equal to use
+    */
+    webSvr.use('/home', function(req, res) {
+      //do sth.
+      req.filter.next();
+    });
 
 Handler (HttpHandler, Servlet)
 --------------
