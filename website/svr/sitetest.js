@@ -4,7 +4,7 @@ var WebSvr = require("websvr");
 //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
 var webSvr = new WebSvr({
-    root: "./web"
+    home: "./web"
   , listDir:  true
   , debug:    true
 }).start();
@@ -20,7 +20,7 @@ webSvr.filter(function(req, res) {
 
   //Link to next filter
   req.filter.next();
-}, {parse:true, session:true});
+}, {post:true, session:true});
 
 /*
 Session Filter: protect web/* folder => (validation by session);
@@ -137,13 +137,13 @@ webSvr
   //Mapping "hello" to a string, trying at http://localhost:8054/hello
   .url("hello", "Hello WebSvr!")
   //Mapping "post" and parse the post in the request, trying at: http://localhost:8054/post.htm
-  .post("post.htm", function(req, res) {
+  .url("post.htm", function(req, res) {
     res.writeHead(200, {"Content-Type": "text/html"});
     //With session support: "{session: true}"
     res.write("You username is " + req.session.get("username"));
     res.write('<form action="" method="post"><input name="input" /></form><br/>');
     res.end('Received : ' + req.body);
-  }, {session: true});
+  }, {session: true, post: true});
 
 
 var httpsSvr = new WebSvr({

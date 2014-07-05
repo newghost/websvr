@@ -40,13 +40,13 @@ Session based authentication, basically useage:
 
     /*
     General filter: parse the post data / session before all request
-      parse:   parse the post data and stored in req.body;
+      post:   parse the post data and stored in req.body;
       session: init the session and stored in req.session; 
     */
     webSvr.filter(function(req, res) {
       //Link to next filter
       req.filter.next();
-    }, {parse:true, session:true});
+    }, {session: true, post: 'json'});
 
 Advanced useage: All the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"
 
@@ -103,7 +103,7 @@ Handle Login and put the username in Session
         res.writeHead(401);
         res.end("Wrong username/password");
       }
-    }, {post: "qs"});
+    }, "qs");  //"qs" equal { post: "qs" } or "querystring"
 
 
 Note:

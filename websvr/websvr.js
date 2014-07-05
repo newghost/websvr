@@ -222,7 +222,6 @@ var WebSvr = module.exports = function(options) {
           , err.stack || err.message || 'unknow error'
         ].join('\n');
 
-        console.log(errorMsg);
         console.error(errorMsg);
       }
     };
@@ -233,7 +232,7 @@ var WebSvr = module.exports = function(options) {
     */
     var parseBody = function() {
       //need to parse the request?
-      if ((mapper.parse || mapper.post) && typeof req.body == "undefined") {
+      if (mapper.post && typeof req.body == "undefined") {
         //Must parser the request first, or the post data will lost;
         BodyParser(req, res, function(data) {
           var body = data;
@@ -546,8 +545,9 @@ var WebSvr = module.exports = function(options) {
     self.expression = expression;
     self.handler = handler;
 
-    //Has other parameters?
-    self.extend(options);
+    typeof options == 'object'
+      ? self.extend(options)
+      : (self.post = options);
   };
 
   Mapper.prototype = {
@@ -677,7 +677,15 @@ var WebSvr = module.exports = function(options) {
       var mapper = new Mapper(expression, handler, options);
       Filter.filters.push(mapper);
 
-      return this;
+      return self;
+    }
+
+    //Session: parse the session
+    , session: function(expression, handler, options) {
+      this.filter(expression, handler, options);
+      //Set the previous mapper
+      Filter.filters[Filter.filters.length - 1].session = true;
+      return self;
     }
 
     /*
@@ -689,7 +697,7 @@ var WebSvr = module.exports = function(options) {
       //insert at the top of the filter array
       Filter.filters.splice(0, 0, mapper);
 
-      return this;
+      return self;
     }
   };
 
@@ -754,18 +762,7 @@ var WebSvr = module.exports = function(options) {
     , url: function(expression, handler, options) {
       var mapper = new Mapper(expression, handler, options);
       Handler.handlers.push(mapper);
-
       return self;
-    }
-
-    //Post: Parse the post data by default;
-    , post: function(expression, handler, options) {
-      return this.url(expression, handler, _.extend({ parse: true }, options));
-    }
-
-    //Session: Parse the session and post by default;
-    , session: function(expression, handler) {
-      return this.url(expression, handler, { parse: true, session: true });
     }
 
     , handle: function(req, res) {
@@ -1181,6 +1178,7 @@ var WebSvr = module.exports = function(options) {
   //Filter
   self.use      = Filter.filter;
   self.filter   = Filter.filter;
+  self.session  = Filter.session;
   self.file     = Filter.file;
 
   //Handler
@@ -1189,7 +1187,6 @@ var WebSvr = module.exports = function(options) {
   self.handle   = Handler.url;
   self.handler  = Handler.url;
   self.post     = Handler.post;
-  self.session  = Handler.session;
   self.settings = Settings;
 
   //Template
