@@ -236,9 +236,6 @@ Settings API:
       //404 template/static file
       , 404:         "404.tmpl"
 
-      //logger file path
-      , logger:     os.tmpDir() + "/log.txt"
-
       /*
       Session timeout, in milliseconds.
       When session is expired, session file will not deleted.
