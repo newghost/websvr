@@ -80,9 +80,6 @@ var WebSvr = module.exports = function(options) {
     , defaultPage: "index.html"
     , 404:         ""
 
-    //logger file path
-    , logger:     os.tmpDir() + "/log.txt"
-
     /*
     Session timeout, in milliseconds.
     When session is expired, session file will not deleted.
@@ -109,42 +106,8 @@ var WebSvr = module.exports = function(options) {
   Logger: log sth
   */
   var Logger = (function() {
-
-    var lineSeparator   = "\r\n",
-        indentSeparator = "\t",
-        depth = 9;
-
-    var write = function(logObj, dep) {
-      var depth   = dep || depth,
-          output  = new Date() + lineSeparator;
-
-      function print(pre, obj) {
-        if (!obj) return;
-        for (var key in obj) {
-          var val = obj[key];
-          output = output + pre + key + " : " + val + lineSeparator;
-          if (typeof val == "object") {
-            (pre.length < depth) && print(pre + indentSeparator, val);
-          }
-        }
-      }
-
-      print(indentSeparator, logObj);
-
-      fs.appendFile(Settings.logger, output, function(err) {
-        log(err);
-      });
-    };
-
     /*
-    Currnetly it's equal to console.log
-    */
-    var log = function() {
-      console.log.apply(console, arguments);
-    };
-
-    /*
-    Add data before log information
+    Turn off debug when Settings.debug = false
     */
     var debug = function() {
       //diable console.log information
@@ -152,17 +115,12 @@ var WebSvr = module.exports = function(options) {
         return;
       }
 
-      var d = new Date().toString();
-
-      Array.prototype.splice.call(arguments, 0, 0, d.substr(0, d.indexOf(" GMT")));
+      var d = new Date().toISOString();
+      Array.prototype.splice.call(arguments, 0, 0, d);
       console.log.apply(console, arguments);
     };
 
-    return { 
-        log:    log
-      , write:  write
-      , debug:  debug
-    };
+    return { debug   : debug };
   })();
 
   /*
@@ -254,7 +212,19 @@ var WebSvr = module.exports = function(options) {
       if (mapper.session && typeof req.session == "undefined") {
         req.session = new SessionParser(req, res);
       }
-      handler(req, res);
+      try {
+        handler(req, res);
+      } catch(err) {
+        var errorMsg = [
+            ''
+          , new Date().toISOString()
+          , 'ErrorUrl: ' + req.url
+          , err.stack || err.message || 'unknow error'
+        ].join('\n');
+
+        console.log(errorMsg);
+        console.error(errorMsg);
+      }
     };
 
     /*
@@ -1281,7 +1251,7 @@ var WebSvr = module.exports = function(options) {
       var httpSvr = http.createServer(requestHandler);
       httpSvr.listen(port);
 
-      Logger.log("Http server running at"
+      console.log("Http server running at"
         ,"home:", home
         ,"port:", port
       );
@@ -1301,7 +1271,7 @@ var WebSvr = module.exports = function(options) {
         cert: Settings.httpsCert
       }, requestHandler).listen(httpsPort);
 
-      Logger.log("Https server running at"
+      console.log("Https server running at"
         ,"home:", home
         ,"port:", httpsPort
       );
