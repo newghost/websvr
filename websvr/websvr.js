@@ -82,18 +82,11 @@ var WebSvr = module.exports = function(options) {
 
     /*
     Session timeout, in milliseconds.
-    When session is expired, session file will not deleted.
     */
     , sessionTimeout: 1440000
-    /*
-    Session garbage collection time, in milliseconds.
-    When session expired time is more than (sessionAge + sessionGCT),
-    then session file will be unlinked.
-    */
-    , sessionGarbage: 3460000
 
     //session file stored here
-    , sessionDir: os.tmpDir()
+    , sessionDir: ''
 
     //session domain
     , sessionDomain: ''
@@ -340,7 +333,11 @@ var WebSvr = module.exports = function(options) {
     Init the sessions, load into session pool
     */
     var init = function() {
-      gcTime = Settings.sessionTimeout + Settings.sessionGarbage;
+      if (!Settings.sessionDir) {
+        return;
+      }
+
+      gcTime = 2 * Settings.sessionTimeout;
 
       Logger.debug('Session Dir (gc time):', Settings.sessionDir, gcTime);
 
@@ -401,13 +398,15 @@ var WebSvr = module.exports = function(options) {
 
     //force update session in list, convert to big int
     var update = function(sid, datetime) {
-      list[sid].__lastAccessTime = +Date.parse(datetime) || +new Date();
+      list[sid].__lastAccessTime = datetime
+          ? +Date.parse(datetime) || +new Date()
+          : +new Date();
     };
 
     //remove a sesson from list
     var remove = function(sid) {
       //delete the file
-      fs.unlink(getPath(sid), function(err) {
+      Settings.sessionDir && fs.unlink(getPath(sid), function(err) {
         Logger.debug("unlink session file err", err);
       });
       //remove from list
@@ -438,7 +437,7 @@ var WebSvr = module.exports = function(options) {
     Clean the session in temp folder
     */
     var clean = function() {
-      fs.readdir(Settings.sessionDir, function(err, files) {
+      Settings.sessionDir && fs.readdir(Settings.sessionDir, function(err, files) {
         if (err) return Logger.debug(err);
 
         //converted to minutes
@@ -470,7 +469,7 @@ var WebSvr = module.exports = function(options) {
         update(sid, datetime);
       } else {
         isValid(sid) && update(sid, datetime);  
-      }      
+      }
     };
 
     var stop = function() {
@@ -507,7 +506,7 @@ var WebSvr = module.exports = function(options) {
 
       //force update
       update(sid);
-      fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
+      Settings.sessionDir && fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
         if (err) {
           Logger.debug(err);
         }

@@ -238,15 +238,8 @@ Settings API:
 
       /*
       Session timeout, in milliseconds.
-      When session is expired, session file will not deleted.
       */
       , sessionTimeout: 1440000
-      /*
-      Session garbage collection time, in milliseconds.
-      When session expired time is more than (sessionAge + sessionGCT),
-      then session file will be unlinked.
-      */
-      , sessionGarbage: 3460000
 
       //session file stored here
       , sessionDir: os.tmpDir()
