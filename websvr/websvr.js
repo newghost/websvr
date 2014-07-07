@@ -501,18 +501,19 @@ var WebSvr = module.exports = function(options) {
       session[key] = val;
 
       if (!isValid(sid)) {
-        return;
+        return cb && cb(false);
       }
 
       //force update
       update(sid);
-      Settings.sessionDir && fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
-        if (err) {
-          Logger.debug(err);
-        }
-
-        cb && cb(session);
-      });
+      Settings.sessionDir 
+        ? fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
+            if (err) {
+              Logger.debug(err);
+            }
+            cb && cb(session);
+          })
+        : cb && cb(session);
     };
 
     init();
