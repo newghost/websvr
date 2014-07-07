@@ -1,16 +1,15 @@
 WebSvr
 ==============
-A simple web server, implement HttpModule(filter) and HttpHandler(servlet), autorecover user session when run into problems.
+A simple web server, implement with filter and handler.
 
 
 Features
 --------------
-- Auto recover: It may run into problems but it can restart and re-covery the user sessions automatically.
 - Filter (Middleware):  A request will try to match all the filters first.
 - Handler: When a request matched a handler, it will returned, only one handler will be executed.
-- Session: Stored in file, with JSON format
-- File: Support uploading files
-- Cache: Client-cahce is supported.
+- Session: By config sessionDir, you can store session in files, with JSON format
+- File:  Support uploading files
+- Cache: Cahce template in release mode
 
 Install
 --------------
