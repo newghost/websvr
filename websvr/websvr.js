@@ -217,7 +217,7 @@ var WebSvr = module.exports = function(options) {
           ;
 
         console.error(errorMsg);
-        res.end(errorMsg);
+        res.end('<pre>' + errorMsg + '</pre>');
       }
     };
 
