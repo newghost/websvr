@@ -234,6 +234,8 @@ Settings API:
       , defaultPage: "index.html"
       //404 template/static file
       , 404:         "404.tmpl"
+      //show errors to user(displayed in response)
+      , showError: true
 
       /*
       Session timeout, in milliseconds.

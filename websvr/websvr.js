@@ -73,8 +73,10 @@ var WebSvr = module.exports = function(options) {
     , cache: true
     //enable debug information output
     , debug: true
-	//enable cache of template/include file (when enabled templates will not be refreshed before restart)
+    //enable cache of template/include file (when enabled templates will not be refreshed before restart)
     , templateCache: true
+    //show errors to user(displayed in response)
+    , showError: true
 
     //default pages, only one is supported
     , defaultPage: "index.html"
@@ -217,7 +219,9 @@ var WebSvr = module.exports = function(options) {
           ;
 
         console.error(errorMsg);
-        res.end('<pre>' + errorMsg + '</pre>');
+        Settings.showError
+          ? res.end('<pre>' + errorMsg + '</pre>')
+          : res.end();
       }
     };
 
