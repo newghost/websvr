@@ -1141,6 +1141,28 @@ var WebSvr = module.exports = function(options) {
       res.end();
     };
 
+    //set content-type
+    res.type = function(type) {
+      res.getHeader('Content-Type') && res.removeHeader("Content-Encoding");
+      res.setHeader('Content-Type', mime.lookup(type) || 'text/plain');
+    };
+
+    //Send sth
+    res.send = function(type, content) {
+      if (arguments.length < 2) {
+        content = type;
+        type    = null;
+      }
+
+      typeof output == 'object' && (output = JSON.stringify(content));
+      if (type) {
+        typeof type == 'number'
+          ? res.writeHead(type)
+          : res.type(type);
+      }
+      res.end(content || '');
+    };
+
     //render template objects
     res.render = Template.render;
 
@@ -1169,9 +1191,7 @@ var WebSvr = module.exports = function(options) {
         return;
       }
 
-      !res.getHeader("Content-Type")
-        && res.setHeader("Content-Type", mime.lookup(fullPath));
-
+      res.type(fullPath);
       res.writeHead(200);
       res.end(data, "binary");
     });

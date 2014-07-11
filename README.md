@@ -272,6 +272,9 @@ Return request object
 
     res.req
 
+Set Content-Type
+
+    res.type('xml');
 
 
 WebSvr APIs
@@ -336,6 +339,18 @@ Parse parameters in url
     *   /key/JavaScript  => false 
 
     var params = webSvr.parseUrl(expression, reqUrl);
+
+Send API
+
+  webSvr.send([type or statusCode, ] content);
+
+Send JSON
+
+    webSvr.send('json', { a: 1, b: 2 });
+
+Send String
+
+    webSvr.send(401, 'No permission');
 
 
 Multi-instance support
