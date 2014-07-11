@@ -1154,7 +1154,7 @@ var WebSvr = module.exports = function(options) {
         type    = null;
       }
 
-      typeof output == 'object' && (output = JSON.stringify(content));
+      typeof content == 'object' && (content = JSON.stringify(content));
       if (type) {
         typeof type == 'number'
           ? res.writeHead(type)
