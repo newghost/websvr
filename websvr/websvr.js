@@ -2,7 +2,7 @@
 * Description:  websvr
 * Author:       Kris Zhang
 * Licenses:     MIT
-* Project url:  https://github.com/newghost/node-websvr
+* Project url:  https://github.com/newghost/websvr
 */
 
 "use strict";
@@ -161,10 +161,7 @@ var WebSvr = module.exports = function(options) {
       //Sid doesn't exist, create it
       if (!sidVal || sidVal.length != 25 || !SessionManager.isValid(sidVal)) {
         sidVal = SessionManager.create();
-        sidStr = " _wsid=" + sidVal + "; path=/";
-        Settings.sessionDomain && (sidStr += "; domain=" + Settings.sessionDomain);
-
-        res.setHeader("Set-Cookie", sidStr);
+        res.cookie('_wsid', sidVal, { domain: Settings.sessionDomain, path: '/'});
       };
       self.sid = sidVal;
 
@@ -309,6 +306,36 @@ var WebSvr = module.exports = function(options) {
 
     parseCookies();
   };
+
+
+  /*
+  set: res.cookie(name, value, options)
+  del: res.cookie(name, null);
+  */
+  var Cookie = function(name, value, options) {
+    if (arguments.length < 2) {
+      return Logger.debug('cookie setter ignored', name);
+    }
+
+    var self    = this
+      , cookies = self.cookies = self.cookies || []
+      , setStr  = name + '=' + (value || '')
+      ;
+
+    options = options || {};
+
+    options.path    && (setStr += '; path=' + options.path);
+    options.domain  && (setStr += '; domain=' + options.domain);
+
+    if (value === null) {
+      setStr += '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    } else if (options.expires) {
+      setStr += '; expires=' + (new Date(options.expires)).toGMTString()
+    }
+
+    cookies.push(setStr);
+  };
+
 
   /*
   SessionManager:
@@ -1115,7 +1142,10 @@ var WebSvr = module.exports = function(options) {
     res.end = function() {
 
       //If Content-Type is undefined, using text/html as default
-      !res.headersSent && !res.getHeader('Content-Type') && res.setHeader("Content-Type", "text/html");
+      if (!res.headersSent) {
+        !res.getHeader('Content-Type')    && res.setHeader('Content-Type', 'text/html');
+        res.cookies && res.cookies.length && res.setHeader('Set-Cookie', res.cookies);
+      }
 
       //Execute old end
       endFn.apply(res, arguments);
@@ -1162,6 +1192,8 @@ var WebSvr = module.exports = function(options) {
       }
       res.end(content || '');
     };
+
+    res.cookie = Cookie;
 
     //render template objects
     res.render = Template.render;

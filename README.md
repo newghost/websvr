@@ -276,6 +276,13 @@ Set Content-Type
 
     res.type('xml');
 
+Set/Remove Cookie
+
+    //Set Cookie
+    res.cookie(name, value [, {domain: string, path: string, expires: date}])
+    //Remove Cookie
+    res.cookie(name, null);
+
 
 WebSvr APIs
 --------------
