@@ -279,7 +279,7 @@ Set Content-Type
 Set/Remove Cookie
 
     //Set Cookie
-    res.cookie(name, value [, {domain: string, path: string, expires: date}])
+    res.cookie(name, value [, {domain: string, path: string, expires: date, secure, httponly }])
     //Remove Cookie
     res.cookie(name, null);
 

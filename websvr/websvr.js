@@ -324,14 +324,16 @@ var WebSvr = module.exports = function(options) {
 
     options = options || {};
 
-    options.path    && (setStr += '; path=' + options.path);
-    options.domain  && (setStr += '; domain=' + options.domain);
-
     if (value === null) {
       setStr += '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } else if (options.expires) {
       setStr += '; expires=' + (new Date(options.expires)).toGMTString()
     }
+
+    options.path      && (setStr += '; path=' + options.path);
+    options.domain    && (setStr += '; domain=' + options.domain);
+    options.secure    && (setStr += '; secure');
+    options.httponly  && (setStr += '; httponly');
 
     cookies.push(setStr);
   };
