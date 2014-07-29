@@ -796,7 +796,7 @@ var WebSvr = module.exports = function(options) {
     */
     , url: function(expression, handler, options) {
       if (!expression) {
-        console.trace('url expression error');
+        console.log('url expression ignored');
       } else {
         var mapper = new Mapper(expression, handler, options);
         Handler.handlers.push(mapper);
