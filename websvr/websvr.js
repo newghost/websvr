@@ -1173,7 +1173,8 @@ var WebSvr = module.exports = function(options) {
 
     //301/302 : move permanently
     res.redirect = function(url, status) {
-      res.writeHead(status ? status : 302, { "Location": url });
+      res.statusCode = status || 302;
+      res.setHeader('Location', url);
       res.end();
     };
 
