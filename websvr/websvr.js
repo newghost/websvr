@@ -1322,9 +1322,9 @@ var WebSvr = module.exports = function(options) {
     }
 
     //Create https server: Disable by default
-    if ( options.httpsPort
-      && options.httpsKey
-      && options.httpsCert) {
+    if ( Settings.httpsPort
+      && Settings.httpsKey
+      && Settings.httpsCert) {
 
       var httpsPort = Settings.httpsPort;
 
