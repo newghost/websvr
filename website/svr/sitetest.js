@@ -1,13 +1,18 @@
 //import WebSvr module
-var WebSvr = require("websvr");
+var WebSvr = require("../../websvr/websvr");
 
 //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
-var webSvr = new WebSvr({
+var webSvr = WebSvr({
     home: "./web"
   , listDir:  true
   , debug:    true
-}).start();
+});
+
+
+webSvr.stop();
+
+webSvr.start();
 
 /*
 General filter: parse the post data / session before all request
@@ -25,9 +30,9 @@ webSvr.filter(function(req, res) {
 /*
 Session Filter: protect web/* folder => (validation by session);
 */
-webSvr.filter(/web\/[\w\.]+/, function(req, res) {
+webSvr.filter(function(req, res) {
   //It's not index.htm/login.do, do the session validation
-  if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
+  if (req.url.indexOf("login.htm") < 0 && req.url.indexOf("login.do") < 0 && req.url !== '/') {
     //Once session is get initialized
     //TODO: Make sure next req.session.get() will not load session file again.
     req.session.get("username", function(val) {
@@ -95,7 +100,6 @@ Template: define default template params
 webSvr.model({
     title   : "New Page"
   , username: "kris"
-  , header  : require("fs").readFileSync("web/header.xml")
 });
 
 /*
@@ -146,8 +150,8 @@ webSvr
   }, {session: true, post: true});
 
 
-var httpsSvr = new WebSvr({
-    root: "./"
+var httpsSvr = WebSvr({
+    home: "./web"
 
   //disable http server
   , port:      null
@@ -165,7 +169,11 @@ var httpsSvr = new WebSvr({
   , sessionDir: "tmp/session/"
   //tempary upload file stored here
   , uploadDir:  "tmp/upload/"
-}).start();
+});
+
+httpsSvr.stop();
+
+httpsSvr.start();
 
 httpsSvr.filters   = webSvr.filters;
 httpsSvr.handlers  = webSvr.handlers;

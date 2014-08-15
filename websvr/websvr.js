@@ -1051,9 +1051,6 @@ var WebSvr = module.exports = function(options) {
 
 
   /*****************Web initial codes*************/
-  //Parameters
-  var home;
-
   var fileHandler = function(req, res) {
 
     var url       = req.url
@@ -1063,7 +1060,7 @@ var WebSvr = module.exports = function(options) {
     //fs.stat can't recognize the file name with querystring;
     url = hasQuery > 0 ? url.substring(0, hasQuery) : url;
 
-    var fullPath = path.join(home, url);
+    var fullPath = path.join(Settings.home, url);
 
     //Handle path
     var handlePath = function(phyPath) {
@@ -1180,8 +1177,10 @@ var WebSvr = module.exports = function(options) {
 
     //set content-type
     res.type = function(type) {
-      res.getHeader('Content-Type') && res.removeHeader("Content-Encoding");
-      res.setHeader('Content-Type', mime.lookup(type) || 'text/plain');
+      if(type && !res.headersSent) {
+        res.getHeader('Content-Type') && res.removeHeader("Content-Encoding");
+        res.setHeader('Content-Type', mime.lookup(type) || 'text/plain');
+      }
     };
 
     //Send sth
@@ -1261,12 +1260,12 @@ var WebSvr = module.exports = function(options) {
 
   //Get a full path of a request
   self.getFullPath = function(filePath) {
-    return path.join(home, filePath);
+    return path.join(Settings.home, filePath);
   };
 
   //Write file, filePath is relative path
   self.writeFile = function(res, filePath, cb, isSvrPath) {
-    !isSvrPath && (filePath = path.join(home, filePath));
+    !isSvrPath && (filePath = path.join(Settings.home, filePath));
     fs.exists(filePath, function(exist) {
       if (exist) {
         writeFile(res, filePath);
@@ -1299,22 +1298,25 @@ var WebSvr = module.exports = function(options) {
     return self;
   };
 
+  self.running = false;
+
   //start http server
   self.start = function() {
-    //Update the default value of Settings
-    _.extend(Settings, options);
 
-    home = Settings.home;
+    if (self.running) {
+      console.log('Already running, ignored');
+      return self;
+    }
 
     //Create http server: Enable by default
     if (Settings.port) {
       var port = Settings.port;
 
-      var httpSvr = http.createServer(requestHandler);
+      var httpSvr = self.httpSvr || http.createServer(requestHandler);
       httpSvr.listen(port);
 
       console.log("Http server running at"
-        ,"home:", home
+        ,"home:", Settings.home
         ,"port:", port
       );
 
@@ -1328,13 +1330,15 @@ var WebSvr = module.exports = function(options) {
 
       var httpsPort = Settings.httpsPort;
 
-      var httpsSvr = https.createServer({
+      var httpsSvr = self.httpsSvr || https.createServer({
         key:  Settings.httpsKey,
         cert: Settings.httpsCert
-      }, requestHandler).listen(httpsPort);
+      }, requestHandler);
+
+      httpsSvr.listen(httpsPort);
 
       console.log("Https server running at"
-        ,"home:", home
+        ,"home:", Settings.home
         ,"port:", httpsPort
       );
 
@@ -1347,6 +1351,8 @@ var WebSvr = module.exports = function(options) {
     //Start session garbage collection
     SessionManager.start();
 
+    self.running = true;
+
     return self;
   };
 
@@ -1355,6 +1361,18 @@ var WebSvr = module.exports = function(options) {
     self.httpSvr  && self.httpSvr.close();
     self.httpsSvr && self.httpsSvr.close();
     SessionManager.stop();
+
+    self.running = false;
+
+    return self;
+  };
+
+  //init
+  self.init = function() {
+    //Update the default value of Settings
+    _.extend(Settings, options);
+    //Start by default
+    self.start();
 
     return self;
   };
@@ -1377,6 +1395,9 @@ var WebSvr = module.exports = function(options) {
       Handler.handlers = handlers;
     }
   });
+
+  //init
+  self.init();
 
   return self;
 

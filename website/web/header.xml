@@ -1,3 +1,4 @@
 <div class="header">
+  <h1>Hello: {{=it.username}}</h1>
   <h1>This is global header, you can override it in your custom model.</h1>
 </div>

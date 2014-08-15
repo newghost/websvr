@@ -6,8 +6,7 @@
   <title>Login</title>
 </head>
 <body>
-  {{=it.header}}
-  Hello: {{=it.username}}
+<!--#include="header.xml"-->
   <fieldset>
     <form action="upload.do" method="post" enctype="multipart/form-data">
       <input type="file" name="filename" class="fileUpload" multiple />
