@@ -831,7 +831,7 @@ var WebSvr = module.exports = function(options) {
 
             //array: treated it as a file.
             case "Array":
-              res.writeFile(handler[0]);
+              res.sendFile(handler[0]);
               break;
           }
           return true;
