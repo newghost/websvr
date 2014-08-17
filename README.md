@@ -256,13 +256,14 @@ Response
 --------------
 Extension on reponse object
 
-Ouput file, relative path, relative to the web home
+Ouput file, filepath relative to the root
 
-    res.writeFile(filePath, [callback]);
+    res.sendRootFile(filePath, [callback]);
 
-Ouput file, absolute path, relative to the server running 
+Ouput file, filepath relative to the home (web dir)
 
-    res.sendFile(filePath,  [callback]);
+    res.sendFile(filePath);
+    res.sendHomeFile(filePath);
 
 Reidrect request
 

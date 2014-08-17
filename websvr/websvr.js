@@ -1158,14 +1158,12 @@ var WebSvr = module.exports = function(options) {
       };
     };
 
-    //relative path, relative to the web home
-    res.writeFile = function(filePath, cb) {
-      self.writeFile(res, filePath, cb);
+    res.sendRootFile = function(filePath) {
+      writeFile(res, path.join(Settings.root, filePath));
     };
 
-    //absolute path, relative to the server running 
-    res.sendFile = function(filePath, cb) {
-      self.writeFile(res, filePath, cb, true)
+    res.sendHomeFile = res.sendFile = function(filePath) {
+      writeFile(res, path.join(Settings.home, filePath));
     };
 
     //301/302 : move permanently
@@ -1261,22 +1259,6 @@ var WebSvr = module.exports = function(options) {
   //Get a full path of a request
   self.getFullPath = function(filePath) {
     return path.join(Settings.home, filePath);
-  };
-
-  //Write file, filePath is relative path
-  self.writeFile = function(res, filePath, cb, isSvrPath) {
-    !isSvrPath && (filePath = path.join(Settings.home, filePath));
-    fs.exists(filePath, function(exist) {
-      if (exist) {
-        writeFile(res, filePath);
-        cb && cb(exist);
-      }else{
-        //If callback function doesn't exist, write 404 page;
-        cb ? cb(exist) : self.write404(res);
-      }
-    });
-
-    return self;
   };
 
   self.write403 = function(res) {
