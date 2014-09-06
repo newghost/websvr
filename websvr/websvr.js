@@ -1176,7 +1176,7 @@ var WebSvr = module.exports = function(options) {
     //set content-type
     res.type = function(type) {
       if(type && !res.headersSent) {
-        res.getHeader('Content-Type') && res.removeHeader("Content-Encoding");
+        res.getHeader('Content-Type') && res.removeHeader("Content-Type");
         res.setHeader('Content-Type', mime.lookup(type) || 'text/plain');
       }
     };
