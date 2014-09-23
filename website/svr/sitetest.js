@@ -9,11 +9,6 @@ var webSvr = WebSvr({
   , debug:    true
 });
 
-
-webSvr.stop();
-
-webSvr.start();
-
 /*
 General filter: parse the post data / session before all request
   parse:   parse the post data and stored in req.body;
@@ -150,6 +145,16 @@ webSvr
   }, {session: true, post: true});
 
 
+webSvr.post('post_qs', function(req, res) {
+  res.end('Received : ' + JSON.stringify(req.body));
+});
+
+
+webSvr.post('post_json', function(req, res) {
+  res.end('Received : ' + JSON.stringify(req.body));
+}, 'json');
+
+
 var httpsSvr = WebSvr({
     home: "./web"
 
@@ -171,9 +176,6 @@ var httpsSvr = WebSvr({
   , uploadDir:  "tmp/upload/"
 });
 
-httpsSvr.stop();
-
-httpsSvr.start();
 
 httpsSvr.filters   = webSvr.filters;
 httpsSvr.handlers  = webSvr.handlers;

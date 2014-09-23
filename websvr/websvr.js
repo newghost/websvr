@@ -804,6 +804,13 @@ var WebSvr = module.exports = function(options) {
       return self;
     }
 
+    , post: function(expression, handler, options) {
+      if (expression && handler) {
+        return this.url(expression, handler, options || 'qs');
+      }
+      return self;
+    }
+
     , handle: function(req, res) {
       //flag: is matched?
       for(var i = 0, len = Handler.handlers.length; i < len ; i++) {
