@@ -951,7 +951,7 @@ var WebSvr = module.exports = function(options) {
 
     //Caching of template files.
     var templatePool    = {}
-      , includeRegExp   = /<!--#include="[\w\.]+"-->/g
+      , includeRegExp   = /<!--#include="[\w\.\\\/]+"-->/g
       , includeBeginLen = 14
       , includeAfterLen = 4
       ;
