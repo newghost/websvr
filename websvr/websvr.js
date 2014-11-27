@@ -161,7 +161,7 @@ var WebSvr = module.exports = function(options) {
       //Sid doesn't exist, create it
       if (!sidVal || sidVal.length != 25 || !SessionManager.isValid(sidVal)) {
         sidVal = SessionManager.create();
-        res.cookie('_wsid', sidVal, { domain: Settings.sessionDomain, path: '/'});
+        res.cookie('_wsid', sidVal, { domain: Settings.sessionDomain, path: '/', httponly: true });
       };
       self.sid = sidVal;
 
