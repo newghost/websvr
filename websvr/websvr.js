@@ -47,6 +47,8 @@ var WebSvr = module.exports = function(options) {
 
   var self = {};
 
+  var SessionStore;
+
   /*****************Web module definitions*************/
   /*
   Configurations
@@ -88,7 +90,8 @@ var WebSvr = module.exports = function(options) {
     , sessionTimeout: 1440000
 
     //session file stored here
-    , sessionDir: ''
+    , sessionDir    : ''
+    , sessionStore  : ''
 
     //session domain
     , sessionDomain: ''
@@ -138,17 +141,16 @@ var WebSvr = module.exports = function(options) {
   /*
   Parse request with session support
   */
-  var SessionParser = function(req, res) {
-    var self = this;
+  var SessionParser = function() {
+    var self  = this;
 
     //session id
-    self.sid = null;
-    //init session object
-    self.init(req, res);
+    self.sid  = null;
+    self.val  = null;
   };
 
   SessionParser.prototype = {
-    init: function(req, res) {
+    init: function(req, res, cb) {
       var self   = this
         , sidKey = "_wsid"
         , sidVal
@@ -158,36 +160,70 @@ var WebSvr = module.exports = function(options) {
       //Get or Create sid, sid exist in the cookie, read it
       var sidVal = req.cookies[sidKey];
 
-      //Sid doesn't exist, create it
-      if (!sidVal || sidVal.length != 25 || !SessionManager.isValid(sidVal)) {
-        sidVal = SessionManager.create();
-        res.cookie('_wsid', sidVal, { domain: Settings.sessionDomain, path: '/', httponly: true });
+      var setSession = function(session) {
+        self.sid = sidVal;
+        self.val = session;
+        self.valid();
+        cb && cb();
       };
-      self.sid = sidVal;
 
-      SessionManager.refresh(self.sid);
+      //Sid doesn't exist, create it
+      if (!sidVal || sidVal.length != 25) {
+        sidVal = self.create();
+        res.cookie(sidKey, sidVal, { domain: Settings.sessionDomain, path: '/', httponly: true });
+        setSession({});
+      } else {
+        SessionStore.get(sidVal, setSession);
+      }
+    }
+
+    //Create a new session id
+    , create: function() {
+      /*
+      * (Time stamp - [random character ...]).length = 25
+      */
+      var id = (+new Date()).toString(32) + '-'; 
+      for (var i = id.length; i < 25; i++ ) {
+        id += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
+      }
+
+      return id;
+    }
+
+    , update: function() {
+      var self = this;
+      SessionStore.set(self.sid, self.val);
+    }
+
+    /*
+    Does session expired?
+    If the session is not in the list, add to the list.
+    i.e. When WebSvr restarted, session will not expired.
+    */
+    , valid: function() {
+      var self = this;
+      var isValid = self.val.__lastAccessTime && (+new Date() - self.val.__lastAccessTime <= Settings.sessionTimeout);
+      if (!isValid) {
+        SessionStore.del(self.sid);
+        self.val = {};
+      }
+      self.val.__lastAccessTime = +new Date();
+      return isValid;
     }
 
     //Set an key/value pair in session object
-    , set: function(key, val, cb) {
-      var self = this;
-      SessionManager.set(self.sid, key, val, cb);
+    , set: function(key, val) {
+      var session = this.val;
+      session.__lastAccessTime = +new Date();
+      session[key] = val;
+      return session;
     }
 
     //Get value from session file
-    , get: function(key, cb) {
-      var self = this
-        , val;
-
-      //The first parameter is callback function
-      if (key.constructor == Function) {
-        cb  = key;
-        key = null;
-      }
-      val = SessionManager.get(self.sid, key);
-      cb && cb(val);
-
-      return val;
+    , get: function(key) {
+      var session = this.val;
+      session.__lastAccessTime = +new Date();
+      return key ? session[key] : session;
     }
   };
 
@@ -196,16 +232,9 @@ var WebSvr = module.exports = function(options) {
   */
   var Parser = function(req, res, mapper) {
 
-    var handler = mapper.handler;
-
-    //add sesion support
-    var parseSession = function() {
-      //add sesion support
-      if (mapper.session && typeof req.session == "undefined") {
-        req.session = new SessionParser(req, res);
-      }
+    var handle = function() {
       try {
-        handler(req, res);
+        mapper.handler(req, res);
       } catch(err) {
         var errorMsg
           = '\n'
@@ -219,6 +248,17 @@ var WebSvr = module.exports = function(options) {
         Settings.showError
           ? res.end('<pre>' + errorMsg + '</pre>')
           : res.end();
+      }
+    };
+
+    //add sesion support
+    var parseSession = function() {
+      //add sesion support
+      if (mapper.session && typeof req.session == "undefined") {
+        req.session = new SessionParser();
+        req.session.init(req, res, handle);
+      } else {
+        handle();
       }
     };
 
@@ -247,7 +287,7 @@ var WebSvr = module.exports = function(options) {
           req.body = body;
           parseSession();
         });
-      }else{
+      } else {
         parseSession();
       }
     };
@@ -276,7 +316,7 @@ var WebSvr = module.exports = function(options) {
           //in fact request will not be parsed again, because body is not undefined
           parseBody();
         });
-      }else{
+      } else {
         parseBody();
       };
     };
@@ -340,121 +380,38 @@ var WebSvr = module.exports = function(options) {
 
 
   /*
-  SessionManager:
+  SessionStore Interface (MemoryStore)
   - Clear expired session files
   - Valid session
+  - get : (sid, callback:Session)
+  - set : (sid, session)
+  - del : (sid)
+  * session object, etc:
+    {
+      sid: {
+        ....
+        __lastAccessTime: dateObject
+      }
+    }
   */
-  var SessionManager = (function() {
+  var MemoryStore = (function() {
 
-    //duration time
-    var gcTime
-      , timer;
-
-    /*
-    * session array object, alls: stored sessions and updated time
-    * etc:
-        {
-          sid: {
-            ....
-            __lastAccessTime: dateObject
-          }
-        }
-    */
     var list = {};
 
-    /*
-    Init the sessions, load into session pool
-    */
-    var init = function() {
-      if (!Settings.sessionDir) {
-        return;
-      }
-
-      gcTime = 2 * Settings.sessionTimeout;
-
-      Logger.debug('Session Dir (gc time):', Settings.sessionDir, gcTime);
-
-      fs.readdir(Settings.sessionDir, function(err, files) {
-        if (err) return Logger.debug(err);
-
-        //converted to minutes
-        var expire = (+new Date() - gcTime) / 60000 | 0;
-
-        files.forEach(function(file) {
-          if (file.length == 25) {
-            var stamp       = parseInt(file.substr(0, file.indexOf('-')))
-              , sessionPath = SessionManager.getPath(file);
-
-            if (stamp) {
-              //remove the expired session
-              if (stamp < expire) {
-                remove(file);
-              } else {
-                fs.readFile(sessionPath, function(err, data) {
-                  if (err) {
-                    Logger.debug(err);
-                    return;
-                  }
-
-                  try {
-                    list[file] = JSON.parse(data);
-                  } catch (e) {
-                    Logger.debug(e);
-                  }
-                });
-              }
-            }
-          }
-        });
-      });
-    };
-
-    var getPath = function(sid) {
-      return path.join(Settings.sessionDir, sid);
-    };
-
-    //create a new session id
-    var create = function() {
-      /*
-      * (Time stamp - [random character ...]).length = 25
-      */
-      var id = (+new Date()).toString('32') + '-'; 
-      for (var i = id.length; i < 25; i++ ) {
-        id += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
-      }
-
-      list[id] = {};
-      update(id);
-
-      return id;
-    };
-
     //force update session in list, convert to big int
-    var update = function(sid, datetime) {
-      list[sid].__lastAccessTime = datetime
-          ? +Date.parse(datetime) || +new Date()
-          : +new Date();
+    //get session in list, if undefined create new one
+    var get = function(sid, cb) {
+      !list[sid] && (list[sid] = {});
+      cb && cb(list[sid]);
+    };
+
+    var set = function(sid, session) {
+      list[sid] = session;
     };
 
     //remove a sesson from list
-    var remove = function(sid) {
-      //delete the file
-      Settings.sessionDir && fs.unlink(getPath(sid), function(err) {
-        Logger.debug("unlink session file err", err);
-      });
-      //remove from list
+    var del = function(sid) {
       delete list[sid];
-
-      Logger.debug("session removed", sid);
-    };
-
-    /*
-    Does session expired?
-    If the session is not in the list, add to the list.
-    i.e. When WebSvr restarted, session will not expired.
-    */
-    var isValid = function(sid) {
-      return list[sid] && ((new Date() - list[sid].__lastAccessTime) || 0 <= Settings.sessionTimeout);
     };
 
     /*
@@ -462,15 +419,33 @@ var WebSvr = module.exports = function(options) {
     */
     var cleanHandler = function() {
       for (var sid in list) {
-        !isValid(sid) && remove(sid);
+        var session = list[sid];
+        var isValid = session.__lastAccessTime && ((new Date() - session.__lastAccessTime) || 0 <= Settings.sessionTimeout * 2);
+        !isValid && del(sid);
       }
     };
 
+    setInterval(cleanHandler, Settings.sessionTimeout * 2);
+
+    return {
+        get     : get
+      , set     : set
+      , del     : del
+    }
+
+  })();
+
+  var FileStore = (function() {
+
+    var getPath = function(sid) {
+      return path.join(Settings.sessionDir, sid);
+    };
+
     /*
-    Clean the session in temp folder
+    Clean the session in session folder
     */
-    var clean = function() {
-      Settings.sessionDir && fs.readdir(Settings.sessionDir, function(err, files) {
+    var cleanHandler = function() {
+      fs.readdir(Settings.sessionDir, function(err, files) {
         if (err) return Logger.debug(err);
 
         //converted to minutes
@@ -491,81 +466,46 @@ var WebSvr = module.exports = function(options) {
       });
     };
 
-    /*
-    * refresh session in list valid first,
-    * if not expired update the time
-    * if not exist create new one
-    */
-    var refresh = function(sid, datetime) {
-      if (!list[sid]) {
-        list[sid] = {};
-        update(sid, datetime);
-      } else {
-        isValid(sid) && update(sid, datetime);  
-      }
+    var del = function(sid) {
+      fs.unlink(getPath(sid), function(err) {
+        Logger.debug("unlink session file err", err);
+      });
     };
 
-    var stop = function() {
-      clearInterval(timer);
-      timer = null;
+    var set = function(sid, session) {
+      fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
+        if (err) {
+          Logger.debug(err);
+        }
+      });
     };
 
-    //stop before new session start
-    var start = function() {
-      //stop cleanHandler if available
-      stop();
-      //clean the old sessions
-      clean();
-      timer = setInterval(cleanHandler, gcTime);
-    };
+    var get = function(sid, cb) {
+      var session = {};
+      fs.readFile(getPath(sid), function(err, data) {
+        if (err) {
+          Logger.debug(err);
+          cb && cb(session);
+          return;
+        }
 
-    var get = function(sid, key) {
-      var session = list[sid] || {};
+        try {
+          session = JSON.parse(data);
+        } catch (e) {
+          Logger.debug(e);
+        }
+        cb && cb(session);
+      });
+    }
 
-      if (!isValid(sid)) {
-        return '';
-      }
-      update(sid);
-      return key ? session[key] : session;
-    };
-
-    var set = function(sid, key, val, cb) {
-      var session = list[sid] || {};
-      session[key] = val;
-
-      if (!isValid(sid)) {
-        return cb && cb(false);
-      }
-
-      //force update
-      update(sid);
-      Settings.sessionDir 
-        ? fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
-            if (err) {
-              Logger.debug(err);
-            }
-            cb && cb(session);
-          })
-        : cb && cb(session);
-    };
-
-    init();
+    setInterval(cleanHandler, Settings.sessionTimeout * 2);
 
     return {
-        init:     init
-      , list:     list
-      , create:   create
-      , update:   update
-      , remove:   remove
-      , refresh:  refresh
-      , isValid:  isValid
-      , getPath:  getPath
-      , clean:    clean
-      , start:    start
-      , stop:     stop
-      , get:      get
-      , set:      set
+        get   : get
+      , set   : set
+      , del   : del
     }
+
   })();
 
   /*
@@ -796,7 +736,7 @@ var WebSvr = module.exports = function(options) {
     */
     , url: function(expression, handler, options) {
       if (!expression) {
-        console.log('url expression ignored');
+        Logger.log('url expression ignored');
       } else {
         var mapper = new Mapper(expression, handler, options);
         Handler.handlers.push(mapper);
@@ -1163,6 +1103,9 @@ var WebSvr = module.exports = function(options) {
       res.write = res.writeHead = res.setHeader = function() {
         Logger.debug("response is already end, response.write ignored!")
       };
+
+      //Update session when resonse.end is executed
+      req.session && req.session.update();
     };
 
     res.sendRootFile = function(filePath) {
@@ -1334,12 +1277,6 @@ var WebSvr = module.exports = function(options) {
       self.httpsSvr = httpsSvr;
     }
 
-    /*
-    init modules
-    */
-    //Start session garbage collection
-    SessionManager.start();
-
     self.running = true;
 
     return self;
@@ -1349,8 +1286,6 @@ var WebSvr = module.exports = function(options) {
   self.stop = function() {
     self.httpSvr  && self.httpSvr.close();
     self.httpsSvr && self.httpsSvr.close();
-    SessionManager.stop();
-
     self.running = false;
 
     return self;
@@ -1360,6 +1295,9 @@ var WebSvr = module.exports = function(options) {
   self.init = function() {
     //Update the default value of Settings
     _.extend(Settings, options);
+
+    SessionStore = Settings.sessionDir ? FileStore : MemoryStore;
+
     //Start by default
     self.start();
 

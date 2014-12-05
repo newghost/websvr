@@ -49,28 +49,26 @@ Session based authentication, basically useage:
 
 Advanced useage: All the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"
 
-    /*
-    API, pass value of key to callback [optional]
-    */
-    var value = req.session.get(key [, callback]);
+
+    var value = req.session.get(key);
 
     /*
     Session Filter: protect web/* folder => (validation by session);
     */
-    webSvr.filter(/web\/[\w\.]+/, function(req, res) {
+    webSvr.filter(function(req, res) {
       //It's not index.htm/login.do, do the session validation
-      if (req.url.indexOf("index.htm") < 0 && req.url.indexOf("login.do") < 0) {
-        req.session.get("username", function(val){
-          console.log("session", val);
+      if (req.url.indexOf("login.htm") < 0 && req.url.indexOf("login.do") < 0 && req.url !== '/') {
+        //Once session is get initialized
+        //TODO: Make sure next req.session.get() will not load session file again.
+        var val = req.session.get("username");
 
-          !val && res.end("You must login, first!");
+        console.log("session username:", val);
+        !val && res.end("You must login, first!");
 
-          //Link to next filter
-          req.filter.next();
-        });
+        //Link to next filter
+        req.filter.next();
       } else {
-          //Link to next filter
-          req.filter.next();
+        req.filter.next();
       }
     });
 
@@ -91,19 +89,19 @@ Handle Login and put the username in Session
       username: admin
       password: 12345678
     */
-    webSvr.handle("login.do", function(req, res) {
+    webSvr.url("login.do", function(req, res) {
       var qs = req.body;
+      console.log(qs);
       if (qs.username == "admin" && qs.password == "12345678") {
         //Put key/value pair in session
-        req.session.set("username", qs.username, function(session) {
-          res.redirect("/web/setting.htm");
-        });
-      }else{
+        var session = req.session.set("username", qs.username);
+        console.log(session);
+        res.redirect("setting.htm");
+      } else {
         res.writeHead(401);
         res.end("Wrong username/password");
       }
-    }, "qs");  //"qs" equal { post: "qs" } or "querystring"
-
+    }, 'qs');
 
 Note:
 --------------

@@ -7,6 +7,7 @@ var webSvr = WebSvr({
     home: "./web"
   , listDir:  true
   , debug:    true
+  , sessionTimeout: 60 * 1000
 });
 
 /*
@@ -15,12 +16,11 @@ General filter: parse the post data / session before all request
   session: init the session and stored in req.session; 
 */
 webSvr.filter(function(req, res) {
-  //TODO: Add greeting words in filter
-  //res.write("Hello WebSvr!<br/>");
 
   //Link to next filter
   req.filter.next();
-}, {post:true, session:true});
+
+}, {session:true});
 
 /*
 Session Filter: protect web/* folder => (validation by session);
@@ -30,15 +30,13 @@ webSvr.filter(function(req, res) {
   if (req.url.indexOf("login.htm") < 0 && req.url.indexOf("login.do") < 0 && req.url !== '/') {
     //Once session is get initialized
     //TODO: Make sure next req.session.get() will not load session file again.
-    req.session.get("username", function(val) {
-      console.log("session username:", val);
+    var val = req.session.get("username");
 
-      !val && res.end("You must login, first!");
+    console.log("session username:", val);
+    !val && res.end("You must login, first!");
 
-      //Link to next filter
-      req.filter.next();
-    });
-
+    //Link to next filter
+    req.filter.next();
   } else {
     req.filter.next();
   }
@@ -50,26 +48,19 @@ Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
 */
-webSvr.session("login.do", function(req, res) {
-  var querystring = require("querystring");
-
-  //TODO: Add an parameter to auto-complete querystring.parse(req.body);
-  var qs = querystring.parse(req.body);
+webSvr.url("login.do", function(req, res) {
+  var qs = req.body;
+  console.log(qs);
   if (qs.username == "admin" && qs.password == "12345678") {
     //Put key/value pair in session
-    //TODO: Support put JSON object directly
-    req.session.set("username", qs.username, function(session) {
-      //res.writeHead(200, {"Content-Type": "text/html"});
-      //res.writeFile("/web/setting.htm");
-      //TODO: Error handler of undefined methods
-      console.log(session);
-      res.redirect("setting.htm");
-    });
+    var session = req.session.set("username", qs.username);
+    console.log(session);
+    res.redirect("setting.htm");
   } else {
     res.writeHead(401);
     res.end("Wrong username/password");
   }
-});
+}, 'qs');
 
 /*
 Uploader: upload.do => (receive handler)
@@ -105,9 +96,8 @@ webSvr.url("template.node", function(req, res) {
 
   res.writeHead(200, {"Content-Type": "text/html"});
   //render template with session: { "username" : "admin" }
-  req.session.get(function(session) {
-    res.render(session);
-  });
+  var session = req.session.get();
+  res.render(session);
 });
 
 /*
