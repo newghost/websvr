@@ -162,7 +162,7 @@ webSvr.post('post_json', function(req, res) {
 
 /*
 * HTTPS server
-* session stored in files
+* session stored in files£ºsupport for hot restart
 */
 var httpsSvr = WebSvr({
     home: "./web"
@@ -184,8 +184,6 @@ var httpsSvr = WebSvr({
   //tempary upload file stored here
   , uploadDir:  "tmp/upload/"
 
-  //10 seconds
-  , sessionTimeout: 10 * 1000
 });
 
 
@@ -193,5 +191,5 @@ httpsSvr.filters   = webSvr.filters;
 httpsSvr.handlers  = webSvr.handlers;
 
 
-//Clear session in 10 seconds (Session stored in files)
-setInterval(httpsSvr.SessionStore.clear, 10000);
+//Clear session (Session stored in files)
+setInterval(httpsSvr.SessionStore.clear, 1000000);
