@@ -184,6 +184,9 @@ var httpsSvr = WebSvr({
   //tempary upload file stored here
   , uploadDir:  "tmp/upload/"
 
+  //5 minutes
+  , sessionTimeout: 5 * 60 * 1000
+
 });
 
 
