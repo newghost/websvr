@@ -26,11 +26,12 @@ It's simple to start the websvr.
 
     //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
     //Trying at: http://localhost:8054
-    var webSvr = new WebSvr({
-        home: "./"
+    var webSvr = WebSvr({
+        home: "./web"
       , listDir:  true
       , debug:    true
-    }).start();
+      , sessionTimeout: 60 * 1000
+    });
 
 
 Filter (HttpModule)
@@ -38,19 +39,23 @@ Filter (HttpModule)
 Session based authentication, basically useage:
 
     /*
-    General filter: parse the post data / session before all request
-      post:   parse the post data and stored in req.body;
-      session: init the session and stored in req.session; 
+    Session support; 
     */
     webSvr.filter(function(req, res) {
       //Link to next filter
       req.filter.next();
-    }, {session: true, post: 'json'});
-
-Advanced useage: All the request under "test/" will parse the post data and session by default, except the "index.htm" and "login.do"
+    }, {session:true});
 
 
-    var value = req.session.get(key);
+    /*
+    * filter equal to use
+    */
+    webSvr.use('/home', function(req, res) {
+      //do sth.
+      req.filter.next();
+    });
+
+Filter all the requests that begin with "test/", check the user permission in session, except the "index.htm" and "login.do".
 
     /*
     Session Filter: protect web/* folder => (validation by session);
@@ -58,8 +63,6 @@ Advanced useage: All the request under "test/" will parse the post data and sess
     webSvr.filter(function(req, res) {
       //It's not index.htm/login.do, do the session validation
       if (req.url.indexOf("login.htm") < 0 && req.url.indexOf("login.do") < 0 && req.url !== '/') {
-        //Once session is get initialized
-        //TODO: Make sure next req.session.get() will not load session file again.
         var val = req.session.get("username");
 
         console.log("session username:", val);
@@ -70,30 +73,23 @@ Advanced useage: All the request under "test/" will parse the post data and sess
       } else {
         req.filter.next();
       }
-    });
-
-    /*
-    * filter equal to use
-    */
-    webSvr.use('/home', function(req, res) {
-      //do sth.
-      req.filter.next();
-    });
+    }, { session: true });
 
 Handler (HttpHandler, Servlet)
 --------------
-Handle Login and put the username in Session
+Handle Login and put the username in session
 
     /*
     Handler: login.do => (validate the username & password)
       username: admin
       password: 12345678
+    webSvr.url equal to webSvr.get/webSvr.post/webSvr.handle
     */
     webSvr.url("login.do", function(req, res) {
       var qs = req.body;
       console.log(qs);
       if (qs.username == "admin" && qs.password == "12345678") {
-        //Put key/value pair in session
+        //Add username in session
         var session = req.session.set("username", qs.username);
         console.log(session);
         res.redirect("setting.htm");
@@ -115,17 +111,17 @@ The result is
 
     request: "domain.com/admin/root/login.svr"   match: true
 
-Handler : Match from the begining but it can bypass '/', for example: 
+Handler : Match from the begining (ignore the first '/'), etc: 
 
-    websvr.handle("root/login", cb) //or
+    websvr.handle("root/login", cb)   //equal to
     websvr.handle("/root/login", cb)
 
-The result is:
+etc:
 
     request: "domain.com/root/login.svr"         match: true
     request: "domain.com/admin/root/login.svr"   match: false
 
-You can use regular expression to match part of url in Handler.
+You can use regular expression to match any part of url in Handler.
 
 Cookies
 --------------
@@ -138,9 +134,9 @@ Template
 --------------
 Render template with params, using doT template engine
 
-    res.render([view, ] model);
+    res.render([view, model]);
 
-View is optional, in this case it will get the template path from req.url
+View is optional, it will get the location of template from req.url
 
     res.render({json: true});
 
@@ -163,15 +159,14 @@ for example:
     webSvr.engine(require("doT").compile);
     webSvr.engine(require("jade").compile);
 
-You can define some default properties in model, for example header/footer, this parameters will be overridden if they have the same name in your custom model.
+You can define some default properties in model, for example header/footer, this parameters will be overridden if they have the same key in your custom model.
 
     webSvr.model({
-        title   : "New Page"
-      , username: "kris"
-      , header  : require("fs").readFileSync("web/header.xml")
+        title   : "WebSvr Page"
+      , username: "WebSvr"
     });
 
-And more, you can use template and render it by using websvr.render(tmplPath, model, callback), tmplPath relative to webSvr.home;
+You can use template and render it by using websvr.render(tmplPath, model, callback), tmplPath relative to webSvr.home;
 
     //pre-defined model
     var model = {};
@@ -184,9 +179,9 @@ And more, you can use template and render it by using websvr.render(tmplPath, mo
       console.log(model);
     });
 
-Include file, you can using "#include" to include a file during rendering a template, in order to make the process easier, the file will fetched from the cache pool so the first refresh will not work after restart the server;
+Include file, you can using "#include" to include a file during rendering a template, in order to make the process easier, the file will fetched from the cache pool so the first refresh will not work when you first start the server;
 
-###Be ware: include file path relative to web home, not the template file itself.###
+###Be ware: include file: relative to web home, not the template file itself.###
 
     <body>
     <!--#include="header.part"-->
@@ -194,9 +189,18 @@ Include file, you can using "#include" to include a file during rendering a temp
 
 Cache templates, by default, server will cache the templates(include the "include file" in the templates), turn it off via:
 
-    var webSvr = new WebSvr({
+    var webSvr = WebSvr({
       templateCache: false
-    }).start();
+    });
+
+
+
+Enable template engine and '<!--#include=""-->', using: res.render()/res.render(model)/res.render(tmplPath, model), etc
+
+webSvr.url(['login.htm', 'setting.htm'], function(req, res) {
+  res.render();
+});
+
 
 Settings
 --------------
@@ -310,7 +314,7 @@ Post type
 
 Handle session
 
-    webSvr.session("sessionrequire", function(req, res) {
+    webSvr.session("session required url", function(req, res) {
         console.log(req.session);
         res.end();
     });

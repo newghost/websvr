@@ -1,6 +1,7 @@
 //import WebSvr module
 var WebSvr = require("../../websvr/websvr");
 
+
 //Start the WebSvr, runnting at parent folder, default port is 8054, directory browser enabled;
 //Trying at: http://localhost:8054
 var webSvr = WebSvr({
@@ -10,26 +11,22 @@ var webSvr = WebSvr({
   , sessionTimeout: 60 * 1000
 });
 
+
 /*
-General filter: parse the post data / session before all request
-  parse:   parse the post data and stored in req.body;
-  session: init the session and stored in req.session; 
+Session support; 
 */
 webSvr.filter(function(req, res) {
-
   //Link to next filter
   req.filter.next();
-
 }, {session:true});
+
 
 /*
 Session Filter: protect web/* folder => (validation by session);
 */
 webSvr.filter(function(req, res) {
-  //It's not index.htm/login.do, do the session validation
+  //Not index.htm/login.do, do the session validation
   if (req.url.indexOf("login.htm") < 0 && req.url.indexOf("login.do") < 0 && req.url !== '/') {
-    //Once session is get initialized
-    //TODO: Make sure next req.session.get() will not load session file again.
     var val = req.session.get("username");
 
     console.log("session username:", val);
@@ -40,19 +37,20 @@ webSvr.filter(function(req, res) {
   } else {
     req.filter.next();
   }
-});
+}, { session: true });
 
 
 /*
 Handler: login.do => (validate the username & password)
   username: admin
   password: 12345678
+webSvr.url equal to webSvr.get/webSvr.post/webSvr.handle
 */
 webSvr.url("login.do", function(req, res) {
   var qs = req.body;
   console.log(qs);
   if (qs.username == "admin" && qs.password == "12345678") {
-    //Put key/value pair in session
+    //Add username in session
     var session = req.session.set("username", qs.username);
     console.log(session);
     res.redirect("setting.htm");
@@ -61,6 +59,7 @@ webSvr.url("login.do", function(req, res) {
     res.end("Wrong username/password");
   }
 }, 'qs');
+
 
 /*
 Uploader: upload.do => (receive handler)
@@ -73,6 +72,7 @@ webSvr.file("upload.do", function(req, res) {
   res.end(JSON.stringify(req.files));
 });
 
+
 /*
 Redirect: redirect request, try at: http://localhost:8054/redirect
 */
@@ -80,13 +80,23 @@ webSvr.url("redirect", function(req, res) {
   res.redirect("/svr/websvr.all.js");
 });
 
+
 /*
 Template: define default template params
 */
 webSvr.model({
-    title   : "New Page"
-  , username: "kris"
+    title   : "WebSvr Page"
+  , username: "WebSvr"
 });
+
+
+/*
+Enable template engine and '<!--#include=""-->', using: res.render()/res.render(model)/res.render(tmplPath, model)
+*/
+webSvr.url(['login.htm', 'setting.htm'], function(req, res) {
+  res.render();
+});
+
 
 /*
 Template: render template with params
@@ -99,6 +109,7 @@ webSvr.url("template.node", function(req, res) {
   var session = req.session.get();
   res.render(session);
 });
+
 
 /*
 Template: render template with jade
@@ -116,6 +127,7 @@ webSvr.url("template.jade", function(req, res) {
     }
   });
 });
+
 
 /*
 Simple redirect API:
@@ -145,6 +157,10 @@ webSvr.post('post_json', function(req, res) {
 }, 'json');
 
 
+
+/*
+* HTTPS server
+*/
 var httpsSvr = WebSvr({
     home: "./web"
 

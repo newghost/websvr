@@ -16,7 +16,7 @@ var os      = require("os");
 var http    = require("http");
 var https   = require("https");
 
-//Open source libraries, some device may not have npm, so reference directly.
+//Open source libraries
 var mime        = require("mime");
 var formidable  = require("formidable");
 
@@ -937,6 +937,7 @@ var WebSvr = module.exports = function(options) {
         the first refresh will not work, need some time to update the cache pool
         */
         tmpl = tmpl.replace(includeRegExp, function(fileStr) {
+          Logger.debug('Include File:', fileStr);
           var includeFile = fileStr.substring(includeBeginLen, fileStr.length - includeAfterLen);
           getFile(includeFile);
           return templatePool[includeFile] || '';
@@ -970,17 +971,22 @@ var WebSvr = module.exports = function(options) {
     return {
         //render templates
         render: function(tmplUrl, model, outFn) {
-          var res = this,
-              end = outFn || res.end;
+          var res = this
+            , end = outFn || res.end
+            , len = arguments.length
+            ;
 
-          if (arguments.length == 1) {
+          len < 1 && (tmplUrl = {});
+
+          if (len < 2) {
             model   = tmplUrl;
             /*
             * remove the first '/' make it as related path
             */
             tmplUrl = res.req.url.substr(1);
 
-            tmplUrl.indexOf('?') > -1 && (tmplUrl = tmplUrl.substr(0, tmplUrl.indexOf('?')));
+            var idx = tmplUrl.indexOf('?');
+            idx > -1 && (tmplUrl = tmplUrl.substr(0, idx));
           }
 
           getTemplate(tmplUrl, function(tmpl) {
