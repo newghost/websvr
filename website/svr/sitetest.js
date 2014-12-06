@@ -8,7 +8,7 @@ var webSvr = WebSvr({
     home: "./web"
   , listDir:  true
   , debug:    true
-  , sessionTimeout: 60 * 1000
+  , sessionTimeout: 1200 * 1000
 });
 
 
@@ -94,6 +94,8 @@ webSvr.model({
 Enable template engine and '<!--#include=""-->', using: res.render()/res.render(model)/res.render(tmplPath, model)
 */
 webSvr.url(['login.htm', 'setting.htm'], function(req, res) {
+  //Default template engine
+  webSvr.engine(require("doT").compile);
   res.render();
 });
 
@@ -160,6 +162,7 @@ webSvr.post('post_json', function(req, res) {
 
 /*
 * HTTPS server
+* session stored in files
 */
 var httpsSvr = WebSvr({
     home: "./web"
@@ -180,8 +183,15 @@ var httpsSvr = WebSvr({
   , sessionDir: "tmp/session/"
   //tempary upload file stored here
   , uploadDir:  "tmp/upload/"
+
+  //10 seconds
+  , sessionTimeout: 10 * 1000
 });
 
 
 httpsSvr.filters   = webSvr.filters;
 httpsSvr.handlers  = webSvr.handlers;
+
+
+//Clear session in 10 seconds (Session stored in files)
+setInterval(httpsSvr.SessionStore.clear, 10000);

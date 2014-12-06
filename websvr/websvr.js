@@ -91,7 +91,6 @@ var WebSvr = module.exports = function(options) {
 
     //session file stored here
     , sessionDir    : ''
-    , sessionStore  : ''
 
     //session domain
     , sessionDomain: ''
@@ -160,55 +159,56 @@ var WebSvr = module.exports = function(options) {
       //Get or Create sid, sid exist in the cookie, read it
       var sidVal = req.cookies[sidKey];
 
-      var setSession = function(session) {
-        self.sid = sidVal;
-        self.val = session;
-        self.valid();
+      //Does session expired?
+      var getSession = function(session) {
+        var isValid = session && session.__lastAccessTime && (+new Date() - session.__lastAccessTime <= Settings.sessionTimeout);
+
+        if (isValid) {
+          self.sid = sidVal;
+          self.val = session;
+          self.val.__lastAccessTime = +new Date();
+          cb && cb();
+        } else {
+          SessionStore.del(sidVal);
+          setSession();
+        }
+      };
+
+      var setSession = function() {
+        self.create();
+        res.cookie(sidKey, self.sid, { domain: Settings.sessionDomain, path: '/', httponly: true });
         cb && cb();
       };
 
       //Sid doesn't exist, create it
       if (!sidVal || sidVal.length != 25) {
-        sidVal = self.create();
-        res.cookie(sidKey, sidVal, { domain: Settings.sessionDomain, path: '/', httponly: true });
-        setSession({});
+        setSession();
       } else {
-        SessionStore.get(sidVal, setSession);
+        SessionStore.get(sidVal, getSession);
       }
     }
 
     //Create a new session id
     , create: function() {
+      var self = this;
+
       /*
       * (Time stamp - [random character ...]).length = 25
       */
-      var id = (+new Date()).toString(32) + '-'; 
-      for (var i = id.length; i < 25; i++ ) {
-        id += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
+      var sid = (+new Date()).toString(32) + '-'; 
+      for (var i = sid.length; i < 25; i++ ) {
+        sid += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
       }
 
-      return id;
+      self.sid  = sid;
+      self.val  = { __lastAccessTime: +new Date() };
+
+      return self;
     }
 
     , update: function() {
       var self = this;
       SessionStore.set(self.sid, self.val);
-    }
-
-    /*
-    Does session expired?
-    If the session is not in the list, add to the list.
-    i.e. When WebSvr restarted, session will not expired.
-    */
-    , valid: function() {
-      var self = this;
-      var isValid = self.val.__lastAccessTime && (+new Date() - self.val.__lastAccessTime <= Settings.sessionTimeout);
-      if (!isValid) {
-        SessionStore.del(self.sid);
-        self.val = {};
-      }
-      self.val.__lastAccessTime = +new Date();
-      return isValid;
     }
 
     //Set an key/value pair in session object
@@ -367,7 +367,7 @@ var WebSvr = module.exports = function(options) {
     if (value === null) {
       setStr += '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } else if (options.expires) {
-      setStr += '; expires=' + (new Date(options.expires)).toGMTString()
+      setStr += '; expires=' + (new Date(options.expires)).toGMTString();
     }
 
     options.path      && (setStr += '; path=' + options.path);
@@ -396,11 +396,12 @@ var WebSvr = module.exports = function(options) {
   */
   var MemoryStore = (function() {
 
-    var list = {};
+    var list;
 
     //force update session in list, convert to big int
     //get session in list, if undefined create new one
     var get = function(sid, cb) {
+      !list && init();
       !list[sid] && (list[sid] = {});
       cb && cb(list[sid]);
     };
@@ -415,9 +416,9 @@ var WebSvr = module.exports = function(options) {
     };
 
     /*
-    Session clean handler
+    Session clear handler
     */
-    var cleanHandler = function() {
+    var clearHandler = function() {
       for (var sid in list) {
         var session = list[sid];
         var isValid = session.__lastAccessTime && ((new Date() - session.__lastAccessTime) || 0 <= Settings.sessionTimeout * 2);
@@ -425,7 +426,10 @@ var WebSvr = module.exports = function(options) {
       }
     };
 
-    setInterval(cleanHandler, Settings.sessionTimeout * 2);
+    var init = function() {
+      list = {};
+      setInterval(clearHandler, Settings.sessionTimeout * 4);      
+    };
 
     return {
         get     : get
@@ -441,31 +445,6 @@ var WebSvr = module.exports = function(options) {
       return path.join(Settings.sessionDir, sid);
     };
 
-    /*
-    Clean the session in session folder
-    */
-    var cleanHandler = function() {
-      fs.readdir(Settings.sessionDir, function(err, files) {
-        if (err) return Logger.debug(err);
-
-        //converted to minutes
-        var expire = (+new Date() - gcTime) / 60000 | 0;
-
-        files.forEach(function(file) {
-          if (file.length == 25) {
-            var stamp = parseInt(file.substr(0, file.indexOf('-')));
-
-            if (stamp) {
-              //remove the expired session
-              stamp < expire
-                ? remove(file)
-                : Logger.debug("session skipped", file);
-            }
-          }
-        });
-      });
-    };
-
     var del = function(sid) {
       fs.unlink(getPath(sid), function(err) {
         Logger.debug("unlink session file err", err);
@@ -475,7 +454,7 @@ var WebSvr = module.exports = function(options) {
     var set = function(sid, session) {
       fs.writeFile(getPath(sid), JSON.stringify(session), function(err) {
         if (err) {
-          Logger.debug(err);
+          Logger.error(err);
         }
       });
     };
@@ -496,14 +475,38 @@ var WebSvr = module.exports = function(options) {
         }
         cb && cb(session);
       });
-    }
+    };
 
-    setInterval(cleanHandler, Settings.sessionTimeout * 2);
+    /*
+    Clear the sessions, you should do it manually somewhere, etc:
+    setInterval(websvr.SessionStore.clear, 200 * 60 * 1000)
+    */
+    var clear = function() {
+      fs.readdir(Settings.sessionDir, function(err, files) {
+        if (err) return Logger.debug(err);
+
+        //Delete these sessions that created very very long ago
+        var expire = +new Date() - Settings.sessionTimeout * 24;
+
+        for (var i = 0; i < files.length; i++) {
+          var file  = files[i]
+            , idx   = file.indexOf('-')
+            ;
+
+          if (file.length == 25 && idx > 0) {
+            var stamp = parseInt(file.substr(0, idx), 32);
+            //remove the expired session
+            stamp && stamp < expire && del(file);
+          }
+        }
+      });
+    };
 
     return {
         get   : get
       , set   : set
       , del   : del
+      , clear : clear
     }
 
   })();
@@ -1302,7 +1305,12 @@ var WebSvr = module.exports = function(options) {
     //Update the default value of Settings
     _.extend(Settings, options);
 
-    SessionStore = Settings.sessionDir ? FileStore : MemoryStore;
+    if (!Settings.SessionStore) {
+      SessionStore = Settings.sessionDir ? FileStore : MemoryStore;
+    } else {
+      SessionStore = Settings.SessionStore;
+    }
+    self.SessionStore = SessionStore;
 
     //Start by default
     self.start();
