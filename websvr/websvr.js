@@ -381,18 +381,15 @@ var WebSvr = module.exports = function(options) {
 
   /*
   SessionStore Interface (MemoryStore)
-  - Clear expired session files
-  - Valid session
-  - get : (sid, callback:Session)
+  - get : (sid, callback:session)
   - set : (sid, session)
   - del : (sid)
-  * session object, etc:
-    {
-      sid: {
-        ....
-        __lastAccessTime: dateObject
-      }
+  session object: {
+    sid: {
+      ....
+      __lastAccessTime: dateObject
     }
+  }
   */
   var MemoryStore = (function() {
 
