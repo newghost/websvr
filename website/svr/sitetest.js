@@ -185,7 +185,7 @@ var httpsSvr = WebSvr({
   , uploadDir:  "tmp/upload/"
 
   //5 minutes
-  , sessionTimeout: 5 * 60 * 1000
+  , sessionTimeout: 2 * 3600 * 1000
 
 });
 
@@ -198,10 +198,10 @@ httpsSvr.handlers  = webSvr.handlers;
 
 /*
 * Store your session in redis 
-* Requires: npm install redis
+* Requires: npm install websvr-redis
 */
 /*
-var RedisStore = require('./redisstore');
+var RedisStore = require('websvr-redis');
 
 RedisStore.start({ 
     port: 6379
@@ -215,5 +215,4 @@ httpsSvr.sessionStore = RedisStore;
 
 //Clear expired session, only 1 refresh timer is needed
 setInterval(RedisStore.clear, 1000000);
-
 */

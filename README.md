@@ -388,8 +388,9 @@ Do you want to re-use the filters & handlers?
 
 Store session in redis
 --------------
+Install: npm install websvr-redis
 
-    var RedisStore = require('./redisstore');
+    var RedisStore = require('websvr-redis');
 
     RedisStore.start({ 
         port: 6379
