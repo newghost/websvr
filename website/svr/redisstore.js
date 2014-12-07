@@ -39,6 +39,8 @@ var RedisStore = module.exports = (function() {
     });
   };
 
+  //Delete these sessions that created long long ago (1 day)
+  var expire = 24 * 3600 * 1000;
   /*
   Clear the sessions, you should do it manually somewhere, etc:
   setInterval(websvr.SessionStore.clear, 200 * 60 * 1000)
@@ -46,9 +48,6 @@ var RedisStore = module.exports = (function() {
   var clear = function() {
     client.keys('*', function (err, keys) {
       if (err) return console.log(err);
-
-      //Delete these sessions that created very very long ago
-      var expire = +new Date() - Settings.sessionTimeout * 24;
 
       for (var i = 0; i < keys.length; i++) {
         var key  = keys[i]
