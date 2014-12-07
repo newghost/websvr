@@ -386,6 +386,27 @@ Do you want to re-use the filters & handlers?
     httpsSvr.handlers  = webSvr.handlers;
 
 
+Store session in redis
+--------------
+
+    var RedisStore = require('./redisstore');
+
+    RedisStore.start({ 
+        port: 6379
+      , host: 'ourjs.org'
+      , auth: 'your-password-if-needed'
+      , select: 0
+    });
+
+    httpsSvr.sessionStore = RedisStore;
+
+
+Clear expired sessions, only 1 refresh timer is needed
+
+    setInterval(RedisStore.clear, 1000000);
+
+
+
 
 Lincenses
 ----

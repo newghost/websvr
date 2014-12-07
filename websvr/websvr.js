@@ -1302,12 +1302,7 @@ var WebSvr = module.exports = function(options) {
     //Update the default value of Settings
     _.extend(Settings, options);
 
-    if (!Settings.SessionStore) {
-      SessionStore = Settings.sessionDir ? FileStore : MemoryStore;
-    } else {
-      SessionStore = Settings.SessionStore;
-    }
-    self.SessionStore = SessionStore;
+    SessionStore = Settings.sessionDir ? FileStore : MemoryStore;
 
     //Start by default
     self.start();
@@ -1331,6 +1326,19 @@ var WebSvr = module.exports = function(options) {
     },
     set: function(handlers) {
       Handler.handlers = handlers;
+    }
+  });
+
+  define(self, 'sessionStore', {
+    get: function() {
+      return SessionStore;
+    },
+    set: function(sessionStore) {
+      if (sessionStore && sessionStore.get && sessionStore.set && sessionStore.del) {
+        SessionStore = sessionStore;
+      } else {
+        Logger.debug('Your session storage do not have interface: get/set/del');
+      }
     }
   });
 

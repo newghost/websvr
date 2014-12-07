@@ -189,10 +189,31 @@ var httpsSvr = WebSvr({
 
 });
 
+httpsSvr.model({ title: 'HTTPS PAGE', username: 'HTTPS' });
 
 httpsSvr.filters   = webSvr.filters;
 httpsSvr.handlers  = webSvr.handlers;
 
 
-//Clear session (Session stored in files)
-setInterval(httpsSvr.SessionStore.clear, 1000000);
+
+/*
+* Store your session in redis 
+* Requires: npm install redis
+*/
+/*
+var RedisStore = require('./redisstore');
+
+RedisStore.start({ 
+    port: 6379
+  , host: 'ourjs.org'
+  , auth: 'your-password-if-needed'
+  , select: 0
+});
+
+httpsSvr.sessionStore = RedisStore;
+
+
+//Clear expired session, only 1 refresh timer is needed
+setInterval(RedisStore.clear, 1000000);
+
+*/
