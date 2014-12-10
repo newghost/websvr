@@ -404,6 +404,7 @@ var WebSvr = module.exports = function(options) {
     };
 
     var set = function(sid, session) {
+      !list && init();
       list[sid] = session;
     };
 
