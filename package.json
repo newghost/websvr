@@ -1,7 +1,7 @@
 {
   "name": "websvr",
   "description": "A simple web server, implement http module(filter) and handler(servlet), autorecover persistent session",
-  "version": "0.1.29",
+  "version": "0.1.30",
   "author": "Kris Zhang <kris.newghost@gmail.com>",
   "dependencies": {
     "dot":  "1.0.0",
