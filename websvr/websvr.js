@@ -189,20 +189,24 @@ var WebSvr = module.exports = function(options) {
     }
 
     //Create a new session id
-    , create: function() {
-      var self = this;
-
+    , newID: function() {
       /*
       * (Time stamp - [random character ...]).length = 25
       */
-      var sid = (+new Date()).toString(32) + '-'; 
+      var sid = (+new Date()).toString(32) + '-';
+      sid += Settings.serverID || '';
       for (var i = sid.length; i < 25; i++ ) {
         sid += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
       }
 
-      self.sid  = sid;
-      self.val  = { __lastAccessTime: +new Date() };
+      return sid;
+    }
 
+    //Binding new sid to this session
+    , create: function() {
+      var self = this;
+      self.sid  = self.newID();
+      self.val  = { __lastAccessTime: +new Date() };
       return self;
     }
 
@@ -1192,6 +1196,9 @@ var WebSvr = module.exports = function(options) {
   //API have function chain
   //Mapper
   self.parseUrl = Mapper.prototype.parseUrl;
+
+  //Server ID
+  self.newID    = SessionParser.prototype.newID;
 
   //Filter
   self.use      = Filter.filter;
