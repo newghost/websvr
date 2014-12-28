@@ -511,7 +511,7 @@ var WebSvr = module.exports = function(options) {
             ;
 
           if (file.length == 25 && idx > 0) {
-            var stamp = parseInt(file.substr(0, idx), 32);
+            var stamp = parseInt(file.substr(0, idx), CHARS.length);
             //remove the expired session
             stamp && stamp < expire && del(file);
           }
