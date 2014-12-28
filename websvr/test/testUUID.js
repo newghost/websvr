@@ -1,6 +1,8 @@
 var UUIDjs  = require("./lib/uuid"),
     test    = require("./lib/test");
 
+var websvr = require('../websvr')().stop();
+
 (function() {
   // Private array of chars to use
   var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
@@ -193,4 +195,12 @@ test("Custom session id, with short Date", function() {
     + ((Math.random() * 0x40000000 | 0));  //Random 2: Used for distinguish the session
 
   uuid  += '0000000000'.substr(0, 25 - uuid.length);
+});
+
+test("Test default Session ID", function() {
+  var newID = websvr.newID();
+});
+
+test("Test Session ID with appended chars", function() {
+  var newID = websvr.newID(3);
 });

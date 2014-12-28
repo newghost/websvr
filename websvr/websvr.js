@@ -39,6 +39,8 @@ var _ = {
 //Shortcuts
 var define = Object.defineProperty;
 
+//Mapping
+var CHARS = '0123456789abcdefghijklmnopqrstuvwxyz'.split('');
 
 /*
 * Define and Export WebSvr
@@ -189,14 +191,27 @@ var WebSvr = module.exports = function(options) {
     }
 
     //Create a new session id
-    , newID: function() {
+    /*
+    * newId()  : [Time Stamp]-[serverID][Random Chars]     //fixed length
+    * newID(n) : [serverID][Time Stamp][Random Chars(n)]
+    */
+    , newID: function(appendLen) {
       /*
       * (Time stamp - [random character ...]).length = 25
       */
-      var sid = (+new Date()).toString(32) + '-';
-      sid += Settings.serverID || '';
-      for (var i = sid.length; i < 25; i++ ) {
-        sid += String.fromCharCode((Math.random() * 26 | 0) + 97);  /* a-z: 0~26; a = 97 */
+      var len = CHARS.length;
+      var sid = (+new Date()).toString(len);
+
+      if (appendLen) {
+        sid = Settings.serverID || '' + sid;
+        for (var i = 0; i < appendLen; i++) {
+          sid += CHARS[Math.random() * len | 0];
+        }
+      } else {
+        sid = sid + '-' + (Settings.serverID || '');
+        for (var i = sid.length; i < 25; i++ ) {
+          sid += CHARS[Math.random() * len | 0];
+        }
       }
 
       return sid;
