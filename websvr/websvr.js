@@ -999,14 +999,18 @@ var WebSvr = module.exports = function(options) {
           len < 1 && (tmplUrl = {});
 
           if (len < 2) {
-            model   = tmplUrl;
-            /*
-            * remove the first '/' make it as related path
-            */
-            tmplUrl = res.req.url.substr(1);
+            if (typeof tmplUrl == 'object') {
+              model   = tmplUrl;
+              /*
+              * remove the first '/' make it as related path
+              */
+              tmplUrl = res.req.url.substr(1);
 
-            var idx = tmplUrl.indexOf('?');
-            idx > -1 && (tmplUrl = tmplUrl.substr(0, idx));
+              var idx = tmplUrl.indexOf('?');
+              idx > -1 && (tmplUrl = tmplUrl.substr(0, idx));
+            } else {
+              model   = {};
+            }
           }
 
           getTemplate(tmplUrl, function(tmpl) {
