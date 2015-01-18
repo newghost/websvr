@@ -688,7 +688,8 @@ var WebSvr = module.exports = function(options) {
     this filter should be always at the top of the filter list
     */
     , file: function(expression, handler, options) {
-      var mapper = new Mapper(expression, handler, {file: true}); 
+      var mapper = new Mapper(expression, handler, options);
+      mapper.file = true;
       //insert at the top of the filter array
       Filter.filters.splice(0, 0, mapper);
 
@@ -1007,7 +1008,7 @@ var WebSvr = module.exports = function(options) {
               tmplUrl = res.req.url.substr(1);
 
               var idx = tmplUrl.indexOf('?');
-              idx > -1 && (tmplUrl = tmplUrl.substr(0, idx));
+              idx > -1 && (tmplUrl = tmplUrl.substr(0, idx));              
             } else {
               model   = {};
             }
