@@ -18,7 +18,7 @@ Session support;
 webSvr.filter(function(req, res) {
   //Link to next filter
   req.filter.next();
-}, {session:true});
+}, {session: true});
 
 
 /*
@@ -70,6 +70,12 @@ webSvr.file("upload.do", function(req, res) {
   //form fields is stored in req.body
   res.write(JSON.stringify(req.body));
   res.end(JSON.stringify(req.files));
+}).before(function(req, res) {
+  if ((req.headers['content-length'] || 0) > 245760) {
+    res.send('Posting is too large, should less than 240K')
+  } else {
+    return true
+  }
 });
 
 

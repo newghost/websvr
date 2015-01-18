@@ -123,8 +123,8 @@ var WebSvr = module.exports = function(options) {
   })();
 
   /*
-  Body parser, parse the data in request body via 
-  when parse complete, execute the callback, with response data;
+  Body parser, parse the data in request body 
+  when parse complete, execute the callback with response data;
   */
   var BodyParser = function(req, res, callback) {
 
@@ -282,8 +282,7 @@ var WebSvr = module.exports = function(options) {
     };
 
     /*
-    parse data in request, this should be done before parse session,
-    because session stored in file
+    parse data in request
     */
     var parseBody = function() {
       //need to parse the request?
@@ -315,6 +314,12 @@ var WebSvr = module.exports = function(options) {
     parse file in request, this should be at the top of the list
     */
     var parseFile = function() {
+      if (mapper._before && !mapper._before(req, res)) {
+        Logger.debug('"before" function does not return true, request ended.');
+        res.end('This is not a valid request');
+        return
+      }
+
       //Need to parse the file in request?
       if (mapper.file && typeof req.body == "undefined") {
         //Must parser the request first, or the post data maybe lost;
@@ -644,6 +649,15 @@ var WebSvr = module.exports = function(options) {
       for(var key in options) {
         this[key] = options[key]
       }
+    },
+
+    /*
+    Something need to be done first: i.e:
+    check the file size and extension before uploading files;
+    check the content-length before receiving a post json
+    */
+    before: function(func) {
+      func && (this._before = func)
     }
   };
 
@@ -672,15 +686,14 @@ var WebSvr = module.exports = function(options) {
       var mapper = new Mapper(expression, handler, options);
       Filter.filters.push(mapper);
 
-      return self;
+      return mapper;
     }
 
     //Session: parse the session
     , session: function(expression, handler, options) {
-      this.filter(expression, handler, options);
-      //Set the previous mapper
-      Filter.filters[Filter.filters.length - 1].session = true;
-      return self;
+      var mapper = this.filter(expression, handler, options);
+      mapper.session = true;
+      return mapper;
     }
 
     /*
@@ -690,10 +703,10 @@ var WebSvr = module.exports = function(options) {
     , file: function(expression, handler, options) {
       var mapper = new Mapper(expression, handler, options);
       mapper.file = true;
-      //insert at the top of the filter array
+      //insert at the top of the filter list
       Filter.filters.splice(0, 0, mapper);
 
-      return self;
+      return mapper;
     }
   };
 

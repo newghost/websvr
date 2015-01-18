@@ -55,6 +55,7 @@ Session based authentication, basically useage:
       req.filter.next();
     });
 
+
 Filter all the requests that begin with "test/", check the user permission in session, except the "index.htm" and "login.do".
 
     /*
@@ -328,6 +329,22 @@ Handle upload file, it's a specfic filter
       //form fields is stored in req.body
       res.write(JSON.stringify(req.body));
       res.end(JSON.stringify(req.files));
+    });
+
+Valid File beofre receing it
+
+    /*
+    * Valid request before receiving
+    */
+    webSvr.file("upload.do", function(req, res) {
+      res.writeHead(200, {"Content-Type": "text/plain"});
+      res.send(req.files);
+    }).before(function(req, res) {
+      if ((req.headers['content-length'] || 0) > 245760) {
+        res.send('Posting is too large, should less than 240K')
+      } else {
+        return true
+      }
     });
 
 Multi-Mapping in Handler or Filter
