@@ -201,7 +201,7 @@ var WebSvr = module.exports = function(options) {
       var sid = (+new Date()).toString(len);
 
       if (appendLen) {
-        sid = (Settings.serverID || '') + sid;
+        sid += Settings.serverID || '';
         for (var i = 0; i < appendLen; i++) {
           sid += CHARS[Math.random() * len | 0];
         }
