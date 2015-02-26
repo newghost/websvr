@@ -97,6 +97,8 @@ var WebSvr = module.exports = function(options) {
     //session domain
     , sessionDomain: ''
 
+    , sessionLength: 36
+
     //tempary upload file stored here
     , uploadDir:  os.tmpDir()
   };
@@ -183,7 +185,7 @@ var WebSvr = module.exports = function(options) {
       };
 
       //Sid doesn't exist, create it
-      if (!sidVal) {
+      if (!sidVal || sidVal.length != Settings.sessionLength) {
         setSession();
       } else {
         SessionStore.get(sidVal, getSession);
@@ -191,18 +193,23 @@ var WebSvr = module.exports = function(options) {
     }
 
     /*
-    * Create a new session id
-    * newID(n) : [Time Stamp][serverID][Random Chars(n)]
+    * newId()  : [Time Stamp]-[serverID][Random Chars]     //for sessionid, fixed length
+    * newID(n) : [Time Stamp][serverID][Random Chars(n)]   //for userid
     */
     , newID: function(appendLen) {
       var len = CHARS.length;
       var sid = (+new Date()).toString(len);
 
-      !appendLen && (appendLen = 4);
-
-      sid += Settings.serverID || '';
-      for (var i = 0; i < appendLen; i++) {
-        sid += CHARS[Math.random() * len | 0];
+      if (appendLen) {
+        sid = (Settings.serverID || '') + sid;
+        for (var i = 0; i < appendLen; i++) {
+          sid += CHARS[Math.random() * len | 0];
+        }
+      } else {
+        sid = sid + '-' + (Settings.serverID || '');
+        for (var i = sid.length; i < Settings.sessionLength; i++ ) {
+          sid += CHARS[Math.random() * len | 0];
+        }
       }
 
       return sid;
@@ -490,10 +497,36 @@ var WebSvr = module.exports = function(options) {
       });
     };
 
+    /*
+    Clear the sessions, you should do it manually somewhere, etc:
+    setInterval(websvr.SessionStore.clear, 200 * 60 * 1000)
+    */
+    var clear = function() {
+      fs.readdir(Settings.sessionDir, function(err, files) {
+        if (err) return Logger.debug(err);
+
+        //Delete these sessions that created very very long ago
+        var expire = +new Date() - Settings.sessionTimeout * 24;
+
+        for (var i = 0; i < files.length; i++) {
+          var file  = files[i]
+            , idx   = file.indexOf('-')
+            ;
+
+          if (file.length == Settings.sessionLength && idx > 0) {
+            var stamp = parseInt(file.substr(0, idx), CHARS.length);
+            //remove the expired session
+            stamp && stamp < expire && del(file);
+          }
+        }
+      });
+    };
+
     return {
         get   : get
       , set   : set
       , del   : del
+      , clear : clear
     }
 
   })();
