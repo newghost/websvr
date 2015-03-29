@@ -194,6 +194,10 @@ Cache templates, by default, server will cache the templates(include the "includ
       templateCache: false
     });
 
+Clear the cached templates
+
+    webSvr.clear()
+
 
 
 Enable template engine and '<!--#include=""-->', using: res.render()/res.render(model)/res.render(tmplPath, model), etc

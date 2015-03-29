@@ -1035,6 +1035,11 @@ var WebSvr = module.exports = function(options) {
       , model: function(_model) {
           defaultModel = _model;
         }
+      , clear: function() {
+          for (var tmpl in templatePool) {
+            delete templatePool[tmpl]
+          }
+        }
     }
   }());
 
@@ -1250,6 +1255,7 @@ var WebSvr = module.exports = function(options) {
   self.render   = Template.render;
   self.engine   = Template.engine;
   self.model    = Template.model;
+  self.clear    = Template.clear;
 
   //Get a full path of a request
   self.getFullPath = function(filePath) {
