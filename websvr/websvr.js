@@ -1174,7 +1174,7 @@ var WebSvr = module.exports = function(options) {
     res.type = function(type) {
       if(type && !res.headersSent) {
         res.getHeader('Content-Type') && res.removeHeader("Content-Type");
-        res.setHeader('Content-Type', mime.lookup(type) || 'text/plain');
+        res.setHeader('Content-Type', (mime.lookup(type) || 'text/plain') + '; charset=' + (res.charset || 'utf-8'));
       }
     };
 
@@ -1185,7 +1185,11 @@ var WebSvr = module.exports = function(options) {
         type    = null;
       }
 
-      typeof content == 'object' && (content = JSON.stringify(content));
+      if (typeof content == 'object') {
+        content = JSON.stringify(content);
+        type = type || 'json';
+      }
+
       if (type) {
         typeof type == 'number'
           ? res.writeHead(type)

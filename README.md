@@ -292,6 +292,11 @@ Set/Remove Cookie
     res.cookie(name, null);
 
 
+Change default charset
+
+    res.charset = 'utf-8'
+
+
 WebSvr APIs
 --------------
 Mapping url to file, webSvr.url equal to webSvr.handle
