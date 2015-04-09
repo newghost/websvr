@@ -1140,7 +1140,7 @@ var WebSvr = module.exports = function(options) {
 
       //If Content-Type is undefined, using text/html as default
       if (!res.headersSent) {
-        !res.getHeader('Content-Type')    && res.setHeader('Content-Type', 'text/html');
+        !res.getHeader('Content-Type')    && res.setHeader('Content-Type', 'text/html; charset=' + (res.charset || 'utf-8'));
         res.cookies && res.cookies.length && res.setHeader('Set-Cookie', res.cookies);
       }
 
