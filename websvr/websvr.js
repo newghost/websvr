@@ -590,7 +590,20 @@ var WebSvr = module.exports = function(options) {
       //Pure string without params
       if (expression.indexOf('/:') < 0) {
         var idx = reqUrl.indexOf(expression);
-        return isHandler ? (idx == 0 || idx == 1) : (idx > -1);
+
+        /*
+        fix: url(['/m'], cb) & url(['/more'], cb) will match the same handler
+        */
+        if (isHandler) {
+          if ((idx == 0 || idx == 1)) {
+            var lastChar = reqUrl.charAt(idx + expression.length)
+            return lastChar == '' || lastChar == '/' || lastChar == '?'
+          }
+        } else {
+          return idx > -1;
+        }
+
+        return false;
       //Handle and pickup params
       } else {
         var params = this.parseUrl(expression, reqUrl);
