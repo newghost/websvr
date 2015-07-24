@@ -121,7 +121,13 @@ var WebSvr = module.exports = function(options) {
       console.log.apply(console, arguments);
     };
 
-    return { debug   : debug };
+    var error = function() {
+      var d = new Date().toISOString();
+      Array.prototype.splice.call(arguments, 0, 0, d);
+      console.error.apply(console, arguments);
+    };
+
+    return { debug: debug, error: error };
   })();
 
   /*
@@ -781,7 +787,7 @@ var WebSvr = module.exports = function(options) {
     */
     , url: function(expression, handler, options) {
       if (!expression) {
-        Logger.log('url expression ignored');
+        Logger.debug('url expression ignored');
       } else {
         var mapper = new Mapper(expression, handler, options);
         Handler.handlers.push(mapper);
