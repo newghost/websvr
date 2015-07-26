@@ -151,6 +151,10 @@ View is a absolute path, relative to web root
     //means related to Setting.root
     res.render("/list.tmpl", {json: true});
 
+Render raw HTML views
+
+    res.renderRaw(viewContent, model);
+
 You can change template engine, 
 
     webSvr.engine(engineFunc);

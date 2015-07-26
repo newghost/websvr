@@ -980,21 +980,25 @@ var WebSvr = module.exports = function(options) {
       }
     };
 
+    var getInclude = function(tmpl, cb) {
+      /*
+      find and update all the include files,
+      will get templates from cache for making the process easier,
+      the first refresh will not work, need some time to update the cache pool
+      */
+      tmpl = tmpl.replace(includeRegExp, function(fileStr) {
+        Logger.debug('Include File:', fileStr);
+        var includeFile = fileStr.substring(includeBeginLen, fileStr.length - includeAfterLen);
+        getFile(includeFile);
+        return templatePool[includeFile] || '';
+      });
+
+      cb(tmpl);
+    }
+
     var getTemplate = function(filename, cb) {
       getFile(filename, function(tmpl) {
-        /*
-        find and update all the include files,
-        will get templates from cache for making the process easier,
-        the first refresh will not work, need some time to update the cache pool
-        */
-        tmpl = tmpl.replace(includeRegExp, function(fileStr) {
-          Logger.debug('Include File:', fileStr);
-          var includeFile = fileStr.substring(includeBeginLen, fileStr.length - includeAfterLen);
-          getFile(includeFile);
-          return templatePool[includeFile] || '';
-        });
-
-        cb(tmpl);
+        getInclude(tmpl, cb)
       });
     };
 
@@ -1046,6 +1050,12 @@ var WebSvr = module.exports = function(options) {
 
           getTemplate(tmplUrl, function(tmpl) {
             render(tmpl, model, end);
+          });
+        }
+      , renderRaw: function(rawTmpl, model, outFn) {
+          var res = this
+          getInclude(rawTmpl, function(tmpl) {
+            render(tmpl, model, outFn || res.end);
           });
         }
       , engine: function(_engineFunc) {
@@ -1220,7 +1230,8 @@ var WebSvr = module.exports = function(options) {
     res.cookie = Cookie;
 
     //render template objects
-    res.render = Template.render;
+    res.render    = Template.render;
+    res.renderRaw = Template.renderRaw;
 
     //params in the matched url
     req.params = {};
