@@ -971,10 +971,9 @@ var WebSvr = module.exports = function(options) {
             Logger.debug(err);
             cb && cb("");
           } else {
-            tmpl = tmpl.toString();
+            tmpl = getInclude(tmpl.toString(), cb)
             templatePool[filename] = tmpl;
             Logger.debug('update template cache', filename);
-            cb && cb(tmpl);
           }
         });
       }
@@ -983,24 +982,19 @@ var WebSvr = module.exports = function(options) {
     var getInclude = function(tmpl, cb) {
       /*
       find and update all the include files,
-      will get templates from cache for making the process easier,
-      the first refresh will not work, need some time to update the cache pool
+      will get templates from cache for making the process easier
+      include file will be enabled at the next refresh
       */
-      tmpl = tmpl.replace(includeRegExp, function(fileStr) {
+      tmpl = (tmpl || '').replace(includeRegExp, function(fileStr) {
         Logger.debug('Include File:', fileStr);
         var includeFile = fileStr.substring(includeBeginLen, fileStr.length - includeAfterLen);
         getFile(includeFile);
         return templatePool[includeFile] || '';
       });
 
-      cb(tmpl);
+      cb && cb (tmpl)
+      return tmpl
     }
-
-    var getTemplate = function(filename, cb) {
-      getFile(filename, function(tmpl) {
-        getInclude(tmpl, cb)
-      });
-    };
 
     //render a file
     var render = function(chrunk, model, outFn) {
@@ -1048,7 +1042,7 @@ var WebSvr = module.exports = function(options) {
             }
           }
 
-          getTemplate(tmplUrl, function(tmpl) {
+          getFile(tmplUrl, function(tmpl) {
             render(tmpl, model, end);
           });
         }
