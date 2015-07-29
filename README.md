@@ -211,6 +211,9 @@ webSvr.url(['login.htm', 'setting.htm'], function(req, res) {
 });
 
 
+It also support include file in include files, but you need to refresh more times after the first running.
+
+
 Settings
 --------------
 Return configuration of current WebSvr instance
